@@ -43,15 +43,21 @@ missclass(k_valid$fitted.values, valid$V65)
 #We found that 0, 2 were easiest to find horunge.
 
 #Exercise 3.b Reshape
-simon = do.call(rbind, train[9, ])
+prob_eight <- k_train$prob[, 9]
+sort(prob_eight)[1:3]
+head(sort(prob_eight), 3)
+prob_eight <- prob_eight[prob_eight > 0]
+print(prob_eight)
+ordered_high <- order(prob_eight, decreasing = T)
 
-heatmap(as.matrix(train_table))
-train_table[9, 9]
-
-for (i in 1:10){
+ordered_high <- ordered_high[1:2]
+ordered_low <- order(prob_eight, decreasing = F)
+ordered_low <- ordered_low[1:3]
+ordered_matrix <- c(ordered_high, ordered_low)
+for (i in ordered_matrix){
   my_heatmap <- matrix(as.numeric(train[i,1:64]), nrow=8,ncol=8, byrow = T)
-  
-  heatmap(my_heatmap, Colv = NA, Rowv = NA, main = i-1)
+
+  heatmap(my_heatmap, Colv = NA, Rowv = NA)
 }
 #M?nga ?r v?ldigt lika vet inte om vi ordnat r?tt. 
 
@@ -74,7 +80,7 @@ plot(c(1:30), train_miss_error, ylab = "train_miss_error", xlab = "k", col="pink
 points(c(1:30), val_miss_error, col="green")
 
 #Simon t?nker att n?r de rosa cirklarna m?ter de gr?na s? ah rvi best k v?rde.
-
+# 3am 4 have the lowest validation error. The best k value is the lowest validaiton error.
 k_test <- kknn(as.factor(V65)~., train = train, test = test, k = 9, kernel = "rectangular")
 k_train <- kknn(as.factor(V65)~., train = train, test = train, k = 9, kernel = "rectangular")
 k_valid <- kknn(as.factor(V65)~., train = train, test = valid, k = 9, kernel = "rectangular")
@@ -127,4 +133,18 @@ print(entropy_error)
 plot(c(1:30), entropy_error, ylab = "cross_entropy_error", xlab = "k", col="blue")
 which.min(entropy_error)
 
+
+
+#Assigment 2
+
+
+data = read.csv("parkinsons.csv", header = F)
+n = dim(data)[1]
+set.seed(12345)
+
+id=sample(1:n, floor(n*0.6))
+train=data[id,]
+
+id3=setdiff(id1,id2)
+test=data[id3,]
 
