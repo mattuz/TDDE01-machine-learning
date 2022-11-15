@@ -44,20 +44,28 @@ missclass(k_valid$fitted.values, valid$V65)
 
 #Exercise 3.b Reshape
 prob_eight <- k_train$prob[, 9]
-sort(prob_eight)[1:3]
-head(sort(prob_eight), 3)
-prob_eight <- prob_eight[prob_eight > 0]
 print(prob_eight)
+prob_eight = prob_eight()
 ordered_high <- order(prob_eight, decreasing = T)
-
+print(ordered_high)
 ordered_high <- ordered_high[1:2]
-ordered_low <- order(prob_eight, decreasing = F)
-ordered_low <- ordered_low[1:3]
-ordered_matrix <- c(ordered_high, ordered_low)
-for (i in ordered_matrix){
-  my_heatmap <- matrix(as.numeric(train[i,1:64]), nrow=8,ncol=8, byrow = T)
 
-  heatmap(my_heatmap, Colv = NA, Rowv = NA)
+
+ordered_low <- order(prob_eight, decreasing = F)
+
+ordered_index <- which(prob_eight > 0)
+print(ordered_index)
+ordered_matrix <- c(ordered_high, ordered_low)
+print(ordered_matrix)
+print(train$V65)
+
+my_heatmap <- matrix(as.numeric(train[13,1:64]), nrow=8,ncol=8, byrow = T)
+heatmap(my_heatmap, Colv = NA, Rowv = NA)
+print(as.numeric(train[13, 65]))
+
+for (i in ordered_index){
+  my_heatmap <- matrix(as.numeric(train[i,1:64]), nrow=8,ncol=8, byrow = T)
+  heatmap(my_heatmap, Colv = NA, Rowv = NA, main =train[i, 65])
 }
 #M?nga ?r v?ldigt lika vet inte om vi ordnat r?tt. 
 
@@ -136,15 +144,55 @@ which.min(entropy_error)
 
 
 #Assigment 2
+#Excerice 1
 
-
-data = read.csv("parkinsons.csv", header = F)
-n = dim(data)[1]
+parkin = read.csv("parkinsons.csv", header = T)
+n = dim(parkin)[1]
 set.seed(12345)
 
 id=sample(1:n, floor(n*0.6))
-train=data[id,]
+train=parkin[id,]
+test=parkin[-id,]
 
-id3=setdiff(id1,id2)
-test=data[id3,]
+#Excercise 2
+
+fit = lm(motor_UPDRS ~ ., data = train)
+sum = summary(fit)
+mean(sum$residuals^2)
+print(sum)
+# The variables p-values that are higher than 0.05 does not contribute at all.
+
+#Exercise 3
+
+#Loglikelihood
+log_likelihood <- function(theta,mu,sigma,train){
+  train <- as.matrix(train) # Convert data to matrix
+  n <- dim(X)[1]     # Get number of rows
+  theta<-as.matrix(theta)
+  mu <- as.matrix(mu)
+  
+  loss <- sum( (train%*%theta-mu)^2 ) 
+
+  sum1 <- n*log(sigma^2)/2
+  sum2 <- n*log(2*pi)/2
+  sum3 <- loss/(2*sigma^2)
+  
+  return (-sum1-sum2-sum3)
+}
+
+
+ridge <- function(train, theta, lambda, mu){
+  sigma<-(theta[n+1])
+  loglike <- log_likelihood(theta=theta,mu=mu,sigma=sigma,train=train)
+  ridge <- -loglik + lambda*sum(theta^2)
+  return(ridge)
+  
+}                                     
+
+
+rideOpt <- function(lambda, train, mu){
+  opt <- optim(par = c(theta, sigma), fn = ridge, lambda=lambda,mu=mu,train=as.matrix(train),theta = theta, method = "BFGS")
+} 
+
+
 
