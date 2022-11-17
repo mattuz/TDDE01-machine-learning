@@ -147,12 +147,15 @@ which.min(entropy_error)
 #Excerice 1
 
 parkin = read.csv("parkinsons.csv", header = T)
-n = dim(parkin)[1]
+parkin_corr <- data.frame(parkin[c(5,7:22)]) #Remove unused voice characteristics
+parkin_scaled <- as.data.frame(scale(parkin_corr))
+
+n = dim(parkin_corr)[1]
 set.seed(12345)
 
 id=sample(1:n, floor(n*0.6))
-train=parkin[id,]
-test=parkin[-id,]
+train=parkin_scaled[id,]
+test=parkin_scaled[-id,]
 
 #Excercise 2
 
@@ -165,34 +168,89 @@ print(sum)
 #Exercise 3
 
 #Loglikelihood
-log_likelihood <- function(theta,mu,sigma,train){
-  train <- as.matrix(train) # Convert data to matrix
-  n <- dim(X)[1]     # Get number of rows
+log_likelihood <- function(theta,Y, sigma,train){
+
+  mu = theta[0]
+  sigma2 = theta[1] 
+  train <- as.matrix(train)
+  n <- dim(train)[1]    
   theta<-as.matrix(theta)
   mu <- as.matrix(mu)
+  Y <- as.matrix(Y)
   
-  loss <- sum( (train%*%theta-mu)^2 ) 
-
-  sum1 <- n*log(sigma^2)/2
+  
+  sum4 <- sum((train%*%-mu)^2) 
+  sum1 <- n*log(sigma2)/2
   sum2 <- n*log(2*pi)/2
-  sum3 <- loss/(2*sigma^2)
+  sum3 <- sum4/(2*sigma2)
   
   return (-sum1-sum2-sum3)
 }
 
 
-ridge <- function(train, theta, lambda, mu){
-  sigma<-(theta[n+1])
-  loglike <- log_likelihood(theta=theta,mu=mu,sigma=sigma,train=train)
-  ridge <- -loglik + lambda*sum(theta^2)
+ridge <- function(train, theta, lambda, Y, sigma){
+  log_like <- log_likelihood(theta=theta,Y=Y,sigma=sigma,train=train)
+  ridge <- -log_lik + lambda*sum(theta[0]^2)
   return(ridge)
   
 }                                     
 
 
-rideOpt <- function(lambda, train, mu){
-  opt <- optim(par = c(theta, sigma), fn = ridge, lambda=lambda,mu=mu,train=as.matrix(train),theta = theta, method = "BFGS")
+ridgeOpt <- function(lambda, train, motomoto){
+  opt <- optim(par = c(0, 0), fn = ridge, lambda = lambda, train = train, Y = motomoto, method = "BFGS")
+  return(opt)
+} 
+
+DF <- function(lambda, X){
+  #From the course formula
+  X <- as.matrix(X)
+  Xt <- t(X)
+  n <- dim(X)[2]
+  I <- diag(n)
+  P <- X%*%solve((Xt%*%X + lambda%*%I))%*%Xt
+  return(t(P))
+} 
+
+#Exercise 4
+Xtrain<-as.matrix(train[2:17])
+motomoto<-as.matrix(train[1])
+Xtest=as.matrix(test[2:17])
+Ytest<-as.matrix(test[1])
+
+for (lambda in c(1, 100, 1000)){
+  ridge_opt = ridgeOpt(lambda,Xtrain, motomoto)
+  print(ridge_opt)
+  
 } 
 
 
+#Assignment 3.
+
+
+prime = read.csv("pima-indians-diabetes.csv", header = F)
+head(prime)
+summary(prime)
+set.seed(12345)
+
+#ex 1
+coloor <- function(x){
+  if (x==1){
+    c = "red"
+  } else{
+    c="green"
+  } 
+  return(c)
+}  
+
+#seems to be diff, no obvious correlation between the variables.
+#Making a linear regresssion would not provide a meaningful line. 
+coloors = sapply(prime$V9, coloor)
+plot(prime$V8, prime$V2, ylab = "Plasma", xlab = "Age", main = "doabets", col = coloors)
+
+
+#ex 2
+
+m1 = glm(V9~ V2 + V8, prime, family = "binomial" )
+prob=predict(m1, type="response")
+pred=ifelse(Prob>0.5, "")
 
