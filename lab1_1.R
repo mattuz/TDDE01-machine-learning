@@ -228,8 +228,7 @@ for (lambda in c(1, 100, 1000)){
 
 
 prime = read.csv("pima-indians-diabetes.csv", header = F)
-head(prime)
-summary(prime)
+
 set.seed(12345)
 
 #ex 1
