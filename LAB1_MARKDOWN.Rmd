@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "LAB 1"
 output: html_document
 ---
 
@@ -260,9 +260,10 @@ ridgeOpt <- function(lambda, train, Y){
   
   train <- as.matrix(train)
   N = dim(train)[2] 
-  init_theta = numeric(N)
+  init_theta = integer(N)
   init_sigma = 1
-  opt <- optim(par = c(init_theta, sigma), fn = ridge, lambda = lambda, train = train, Y = Y, method = "BFGS")
+  
+  opt <- optim(par = c(init_theta,init_sigma), fn = ridge, lambda = lambda, train = train, Y = Y, method = "BFGS")
   return(opt)
 } 
 
@@ -281,7 +282,7 @@ dF <- function(X, lambda){
   AIC = function(train,Y,theta, sigma, lambda){
     log_like = log_likelihood(train = train, Y=Y, theta = theta, sigma = sigma)
     N = dim(train)[1] # No of data points
-    df = Fd(train,lambda)
+    df = dF(train,lambda)
     aic = (-2*log_like/N) + (2*df/N) #(-2*Log-likelihood/N) + 2*(df/N)
     return(aic)
   }
@@ -316,20 +317,20 @@ for (lambda in c(1, 100, 1000)){
 #We have read that to find the best aic value among mutiple aic values is the lowest. In our example it seems like lambda = 1 and lambda = 100 gives similar aic values
 
 ```
-for (lambda in c(1, 100, 1000)){
-  ridge_opt = ridgeOpt(lambda,Xtrain, motomoto)
-  print(ridge_opt)
-  
-}
 
 Assignment 3.
 
-
+```{r, echo=F}
 prime = read.csv("pima-indians-diabetes.csv", header = F)
 
 set.seed(12345)
 
-#ex 1
+```
+
+
+Exercise 1
+
+```{r, echo=F}
 coloor <- function(x){
   if (x==1){
     c = "red"
@@ -339,49 +340,60 @@ coloor <- function(x){
   return(c)
 }  
 
-#seems to be diff, no obvious correlation between the variables.
-#Making a linear regresssion would not provide a meaningful line. 
 coloors = sapply(prime$V9, coloor)
 plot( prime$V2, prime$V8, xlab = "Plasma", ylab = "Age", main = "doabets", col = coloors)
+```
 
-#ex 2
+seems to be different, no obvious correlation between the variables.
+Making a linear regression would not provide a meaningful line. 
 
+
+Exercise 2
+
+```{r, fig.show='hide', echo=F}
 glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
 prob=predict(glm.fits, type="response")
 pred=ifelse(prob>0.5, 'red','green')
 
-table(pred, prime$V9)
+table = table(pred, prime$V9)
 
 miss <- missclass(pred, prime$V9)
 
-plot(prime$V2, prime$V8,col=pred, xlab = "Plasma glucose levels", ylab = "Age", main = paste("Model predictions for Diabetes \n Missclass_Error", toString(miss), sep=" = ") ) 
-#It seems to be an okey classifacation with about 1/4 error but not perfect 
-#There seems to be a division when you reach above 150 in plasma-glucose levels. But this threshold seems to lower 
-#as you age. An older person is more likely to have diabetes even with lower plasma-glucose levels. 
+plot(prime$V2, prime$V8,col=pred, xlab = "Plasma glucose levels", ylab = "Age", main = paste("Missclass error", toString(miss), sep=" = ") ) 
 
-#ex 3
+```
+
+
+It seems to be an acceptable classification with about 1/4 error but not perfect 
+There seems to be a division when you reach above 150 in plasma-glucose levels. But this threshold seems to lower as you age. An older person is more likely to have diabetes even with lower plasma-glucose levels. 
+
+Exercise 3
+
+```{r, echo=F}
 
 r=.5
 glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
-hej = glm.fits$coefficients
+cf = glm.fits$coefficients
 prob=predict(glm.fits, type="response")
 pred=ifelse(prob>0.5, 'red','green')
 
-w9 = hej[1]
-w2 = hej[2]
-w8 = hej[3]
+w9 = cf[1]
+w2 = cf[2]
+w8 = cf[3]
 
 x8 = c(seq(0,100,0.1))
 x2 = (log(-r/(r-1)) - w9 - w8*x8)/w2
 
 plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass Error", toString(miss), sep=" = ")) 
 lines(x2,x8,col="blue")
+```
 
-#Obviously it very good
+It catches the distribution very well
 
 
-#Ex 4
+Exercise 4
 
+```{r, echo=F}
 for(r in c(.2,.5, .8)) {
   pred=ifelse(prob>r, 'red','green')
   table(pred, prime$V9)
@@ -393,11 +405,16 @@ for(r in c(.2,.5, .8)) {
   plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass_Error", toString(miss), sep=" = ")) 
   lines(x2,x8,col="blue")
 }
-#With r=.2 and r=.8, the missclassification error increased. r=.2 was clearly worse (37% error). 
+```
+
+With r=.2 and r=.8, the missclassification error increased. r=.2 was clearly worse (37% error). 
 
 
 
 Exercise 5
+
+
+```{r, echo=F}
 expanded <- prime
 
 expanded$z1 <- expanded$V2 ** 4
@@ -420,8 +437,11 @@ for(r in c(.2,.5, .8)) {
   
   plot(expanded$V2, expanded$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass_Error", toString(miss), sep=" = ")) 
 }
+```
 
-#This model has a lower missclass error, so the quality of this model is slightly better than the previous one. 
-#The linearity of the model is however gone, since we've added non-linear variables. This causes the 
-#plotted colors to look more like a "slice"
+
+This model has a lower missclass error, so the quality of this model is slightly better than the previous one. 
+The linearity of the model is however gone, since we've added non-linear variables. This causes the plotted colors to look more like a "slice"
+
+
 
