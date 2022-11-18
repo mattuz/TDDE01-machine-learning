@@ -245,12 +245,80 @@ coloor <- function(x){
 #seems to be diff, no obvious correlation between the variables.
 #Making a linear regresssion would not provide a meaningful line. 
 coloors = sapply(prime$V9, coloor)
-plot(prime$V8, prime$V2, ylab = "Plasma", xlab = "Age", main = "doabets", col = coloors)
-
+plot( prime$V2, prime$V8, xlab = "Plasma", ylab = "Age", main = "doabets", col = coloors)
 
 #ex 2
 
-m1 = glm(V9~ V2 + V8, prime, family = "binomial" )
-prob=predict(m1, type="response")
-pred=ifelse(Prob>0.5, "")
+glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
+prob=predict(glm.fits, type="response")
+pred=ifelse(prob>0.5, 'red','green')
 
+table(pred, prime$V9)
+
+miss <- missclass(pred, prime$V9)
+
+plot(prime$V2, prime$V8,col=pred, xlab = "Plasma glucose levels", ylab = "Age", main = paste("Model predictions for Diabetes \n Missclass_Error", toString(miss), sep=" = ") ) 
+#It seems to be an okey classifacation with about 1/4 error but not perfect 
+#There seems to be a division when you reach above 150 in plasma-glucose levels. But this threshold seems to lower 
+#as you age. An older person is more likely to have diabetes even with lower plasma-glucose levels. 
+
+#ex 3
+
+r=.5
+
+hej = glm.fits$coefficients
+
+w9 = hej[1]
+w2 = hej[2]
+w8 = hej[3]
+
+x8 = c(seq(19,85,0.1))
+x2 = (log(-r/(r-1)) - w9 - w8*x8)/w2
+
+plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Model predictions for with decision boundry \n Missclass_Error", toString(miss), sep=" = ")) 
+lines(x2,x8,col="blue")
+
+#Obviously it very good
+
+
+#Ex 4
+
+for(r in c(.2,.5, .8)) {
+  pred=ifelse(prob>r, 'red','green')
+  table(pred, prime$V9)
+  
+  miss <- missclass(pred, prime$V9)
+  
+  x2 = (log(-r/(r-1)) - w9 - w8*x8)/w2
+  
+  plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass_Error", toString(miss), sep=" = ")) 
+  lines(x2,x8,col="blue")
+}
+#With r=.2 and r=.8, the missclassification error increased. r=.2 was clearly worse (37% error). 
+
+
+
+#Ex 5 . 𝑧𝑧1 = 𝑥𝑥14,𝑧𝑧2 = 𝑥𝑥13𝑥𝑥2, 𝑧𝑧3 = 𝑥𝑥12𝑥𝑥22, 𝑧𝑧4 = 𝑥𝑥1𝑥𝑥23, 𝑧𝑧5 = 𝑥𝑥24 ,
+
+expanded <- prime
+
+expanded$z1 <- expanded$V2 ** 4
+expanded$z2 <- expanded$V2 ** 3 * expanded$V8
+expanded$z3 <- expanded$V2 ** 2 * expanded$V8 ** 2
+expanded$z4 <- expanded$V2 * expanded$V8 ** 3
+expanded$z5 <- expanded$V8 ** 4
+
+glm.fits = glm(V9~ V2 + V8 + z1 + z2 + z3 + z4 + z5, expanded, family = "binomial" )
+
+
+for(r in c(.2,.5, .8)) {
+  prob=predict(glm.fits, type="response")
+  pred=ifelse(prob>r, 'red','green')
+  table(pred, expanded$V9)
+  
+  miss <- missclass(pred, prime$V9)
+  
+  x2 = (log(-r/(r-1)) - w9 - w8*x8)/w2
+  
+  plot(expanded$V2, expanded$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass_Error", toString(miss), sep=" = ")) 
+}
