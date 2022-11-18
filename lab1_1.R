@@ -265,17 +265,19 @@ plot(prime$V2, prime$V8,col=pred, xlab = "Plasma glucose levels", ylab = "Age", 
 #ex 3
 
 r=.5
-
+glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
 hej = glm.fits$coefficients
+prob=predict(glm.fits, type="response")
+pred=ifelse(prob>0.5, 'red','green')
 
 w9 = hej[1]
 w2 = hej[2]
 w8 = hej[3]
 
-x8 = c(seq(19,85,0.1))
+x8 = c(seq(0,100,0.1))
 x2 = (log(-r/(r-1)) - w9 - w8*x8)/w2
 
-plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Model predictions for with decision boundry \n Missclass_Error", toString(miss), sep=" = ")) 
+plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass Error", toString(miss), sep=" = ")) 
 lines(x2,x8,col="blue")
 
 #Obviously it very good
