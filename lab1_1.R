@@ -323,3 +323,7 @@ for(r in c(.2,.5, .8)) {
   
   plot(expanded$V2, expanded$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass_Error", toString(miss), sep=" = ")) 
 }
+
+#This model has a lower missclass error, so the quality of this model is slightly better than the previous one. 
+#The linearity of the model is however gone, since we've added non-linear variables. This causes the 
+#plotted colors to look more like a "slice"
