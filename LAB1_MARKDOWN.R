@@ -1,22 +1,14 @@
----
-title: "LAB 1"
-output: html_document
----
-
-```{r setup, include=FALSE}
+## ----setup, include=FALSE-------------------------------------------------------------------------------------------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
-```
 
 
-```{r, echo=FALSE, warning=FALSE, results='hide'}
+## ---- echo=FALSE, warning=FALSE, results='hide'---------------------------------------------------------------------------------------------------------------------
 #packages needed for the lab
 library(kknn)
 library(readxl)
-```
 
-Exercise 1
 
-```{r, warning=FALSE, results='hide', echo=FALSE}
+## ---- warning=FALSE, results='hide', echo=FALSE---------------------------------------------------------------------------------------------------------------------
 
 data = read.csv("optdigits.csv", header = F)
 n = dim(data)[1]
@@ -55,31 +47,21 @@ missclass = function(X, X1) {
 missclass_test = missclass(k_test$fitted.values, as.factor(test$V65))
 missclass_train = missclass(train$V65, k_train$fitted.values)
 missclass_valid = missclass(k_valid$fitted.values, valid$V65)
-```
 
-Confusion matrices
 
-```{r, echo=T}
+## ---- echo=T--------------------------------------------------------------------------------------------------------------------------------------------------------
 test_table
 train_table 
-```
 
-Missclass Values
-```{r, echo=T}
+
+## ---- echo=T--------------------------------------------------------------------------------------------------------------------------------------------------------
 missclass_test
 missclass_train
 
 
-```
 
-#Comment on the quality of predictions for different digits and on the overall prediction quality.
 
-#Some numbers have worse predictions than others, for example number 4 was predicted to be a 7 a couple of times. 
-#This is most likely due to slopy writing that makes different numbers look more similar to others. 
-#The overall prediction quality is good.
-Exercise 3
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 
 prob_eight <- k_train$prob[, 9]
 
@@ -109,18 +91,9 @@ for (i in ordered_matrix){
   heatmap(my_heatmap, Colv = NA, Rowv = NA, main =train[i, 65])
 }
 
-```
 
 
-#comment on whether these cases seem to be hard or easy to recognize visually. 
-
-#The eights that were easy to classify are also very easy to see as eights. 
-#The eights that were most difficult to spot are very difficult to see without knowing that they're eights beforehand. 
-
-
-Exercise 4
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 train_miss_error <- numeric(30)
 val_miss_error <- numeric(30)
 
@@ -144,33 +117,17 @@ k_valid <- kknn(as.factor(V65)~., train = train, test = valid, k = 4, kernel = "
 missclass_test = missclass(k_test$fitted.values, as.factor(test$V65))
 missclass_train = missclass(train$V65, k_train$fitted.values)
 missclass_valid = missclass(k_valid$fitted.values, valid$V65)
-```
 
 
-
-Missclass Values
-```{r, echo=T}
+## ---- echo=T--------------------------------------------------------------------------------------------------------------------------------------------------------
 missclass_test
 missclass_train
 missclass_valid
 
 
-```
-
-#How does the model complexity change when K increases and how does it affect the training and validation errors?
-
-#The model complexity seems to increase as k increases, given that the missclass error increases as well. 
-#The best K values are the ones with the lowest missclass error, in this case k=3 and k=4 are the best values. 
-
-#We can see that train gives the lowest missclass error because it is the date we made the model from.
-#Both test and validation is slightly higher which is to be expected.
-#With the right k value computed with the validation data we get a test error which is just above 2.5% 
-#Which results in a pretty high quality model.
 
 
-Exercise 5
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 cross.entropy <- function(p, phat){
   x <- 0
   for (i in 1:length(p)){
@@ -213,18 +170,9 @@ for (i in 1:30){
 plot(c(1:30), entropy_error, ylab = "cross_entropy_error", xlab = "k", col="blue")
 which.min(entropy_error)
 
-```
 
 
-#What is the optimal 𝐾𝐾 value here? Assuming that response has multinomial distribution, why might the cross-entropy be a more suitable choice of the error function than the missclassification error for this problem?
-
-#This model might be more suitable because of lower complexity levels than missclass error.
-#The optimal K value here is K = 5. 
-
-Assigment 2
-
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 parkin = read.csv("parkinsons.csv", header = T)
 parkin_corr <- data.frame(parkin[c(5,7:22)]) #Remove unused voice characteristics
 parkin_scaled <- as.data.frame(scale(parkin_corr))
@@ -235,24 +183,18 @@ set.seed(12345)
 id=sample(1:n, floor(n*0.6))
 train=parkin_scaled[id,]
 test=parkin_scaled[-id,]
-```
-Excercise 2
 
-```{r, echo=T}
+
+## ---- echo=T--------------------------------------------------------------------------------------------------------------------------------------------------------
 fit = lm(motor_UPDRS ~ ., data = train)
 sum = summary(fit)
 mean(sum$residuals^2)
 print(sum)
 
 
-```
 
-#The variables p-values that are higher than 0.05 does not contribute at all.
-#The values that contribute significantly are the ones with high p-values and high estimates. Jitter.DDP is one example of a value that will contribute significantly to the model. 
 
-Exercise3
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 log_likelihood <- function(train, Y, theta, sigma){
 
   n <- dim(train)[1] 
@@ -297,9 +239,9 @@ dF <- function(X, lambda){
   P <- X%*%solve((Xt%*%X + (lambda*I)))%*%Xt
   return(sum(diag(P)))
 } 
-```
 
-```{r, echo=F}
+
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
   AIC = function(train,Y,theta, sigma, lambda){
     log_like = log_likelihood(train = train, Y=Y, theta = theta, sigma = sigma)
     N = dim(train)[1] # No of data points
@@ -307,11 +249,9 @@ dF <- function(X, lambda){
     aic = (-2*log_like/N) + (2*df/N) #(-2*Log-likelihood/N) + 2*(df/N)
     return(aic)
   }
-```
 
-Exercise 4
 
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 xtrain<-as.matrix(train[2:17])
 ytrain<-as.matrix(train[1])
 xtest=as.matrix(test[2:17])
@@ -333,24 +273,16 @@ for (lambda in c(1, 100, 1000)){
 
 }
 
-```
-
-#Which penalty parameter is most appropriate among the selected ones? Compute and compare the degrees of freedom of these models and make appropriate conclusions.
-
-#We have read that to find the best aic value among mutiple aic values is the lowest. In our example it seems like lambda = 1 and lambda = 100 gives similar aic values which is hard to draw conclusions from. Lambda = 1 gives the lowest AIC value.
 
 
-Assignment 3.
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 prime = read.csv("pima-indians-diabetes.csv", header = F)
 
 set.seed(12345)
 
-```
 
 
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 coloor <- function(x){
   if (x==1){
     c = "red"
@@ -362,15 +294,9 @@ coloor <- function(x){
 
 coloors = sapply(prime$V9, coloor)
 plot( prime$V2, prime$V8, xlab = "Plasma", ylab = "Age", main = "doabets", col = coloors)
-```
-
-seems to be different, no obvious correlation between the variables.
-Making a linear regression would not provide a meaningful line. 
 
 
-Exercise 2
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
 prob=predict(glm.fits, type="response")
 pred=ifelse(prob>0.5, 'red','green')
@@ -381,15 +307,9 @@ miss <- missclass(pred, prime$V9)
 
 plot(prime$V2, prime$V8,col=pred, xlab = "Plasma glucose levels", ylab = "Age", main = paste("Missclass error", toString(miss), sep=" = ") ) 
 
-```
 
 
-It seems to be an acceptable classification with about 1/4 error but not perfect 
-There seems to be a division when you reach above 150 in plasma-glucose levels. But this threshold seems to lower as you age. An older person is more likely to have diabetes even with lower plasma-glucose levels. 
-
-Exercise 3
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 
 r=.5
 glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
@@ -406,14 +326,9 @@ x2 = (log(-r/(r-1)) - w9 - w8*x8)/w2
 
 plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass Error", toString(miss), sep=" = ")) 
 lines(x2,x8,col="blue")
-```
-
-It catches the distribution very well
 
 
-Exercise 4
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 for(r in c(.2,.5, .8)) {
   pred=ifelse(prob>r, 'red','green')
   table(pred, prime$V9)
@@ -425,16 +340,9 @@ for(r in c(.2,.5, .8)) {
   plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass_Error = ", toString(miss), "\n r = ", r, sep= "")) 
   lines(x2,x8,col="blue")
 }
-```
-
-With r=.2 and r=.8, the missclassification error increased. r=.2 was clearly worse (37% error). 
 
 
-
-Exercise 5
-
-
-```{r, echo=F}
+## ---- echo=F--------------------------------------------------------------------------------------------------------------------------------------------------------
 expanded <- prime
 
 expanded$z1 <- expanded$V2 ** 4
@@ -457,11 +365,4 @@ for(r in c(.2,.5, .8)) {
   
   plot(expanded$V2, expanded$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass_Error = ", toString(miss), "\n r = ", r, sep= "")) 
 }
-```
-
-
-This model has a lower missclass error, so the quality of this model is slightly better than the previous one. 
-The linearity of the model is however gone, since we've added non-linear variables. This causes the plotted colors to look more like a "slice"
-
-
 
