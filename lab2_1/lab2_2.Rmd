@@ -1,0 +1,46 @@
+---
+title: "lab2_2"
+output: html_document
+date: "2022-11-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exercise 1
+```{r}
+
+d = read.csv("bank-full.csv", sep = ";", stringsAsFactors = TRUE)
+data$duration = c() #remove duration column
+output = data['y']
+n = dim(data)[1]
+
+n=dim(data)[1]
+set.seed(12345)
+id=sample(1:n, floor(n*0.4))
+train=data[id,]
+
+id1=setdiff(1:n, id)
+set.seed(12345)
+id2=sample(id1, floor(n*0.3))
+valid=data[id2,]
+
+id3=setdiff(id1,id2)
+test=data[id3,] 
+
+
+```
+
+
+Exercise 2
+```{r}
+library(tree)
+fit=tree(as.factor(y)~., data=train)
+plot(fit)
+text(fit, pretty=0)
+summary(fit)
+
+
+```
+
