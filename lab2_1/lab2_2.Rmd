@@ -12,8 +12,9 @@ Exercise 1
 ```{r}
 
 d = read.csv("bank-full.csv", sep = ";", stringsAsFactors = TRUE)
+data = d
 data$duration = c() #remove duration column
-output = data['y']
+output = d['y']
 n = dim(data)[1]
 
 n=dim(data)[1]
@@ -41,6 +42,75 @@ plot(fit)
 text(fit, pretty=0)
 summary(fit)
 
+fit2=tree(as.factor(y)~., data=train, minsize=7000)
+plot(fit2)
+text(fit2, pretty=0)
+summary(fit2)
+
+fit3=tree(as.factor(y)~., data=train, mindev=0.0005)
+plot(fit3)
+text(fit3, pretty=0)
+summary(fit3)
+
+
+
+```
+Misclassification rate
+```{r}
+Yfit_t=predict(fit, newdata=train, type="class")
+t1<-table(train$y,Yfit_t)
+mis_t1 <- 1-sum(diag(t1))/sum(t1)
+
+Yfit_t2=predict(fit2, newdata=train, type="class")
+t2<-table(train$y,Yfit_t2)
+mis_t2 <- 1-sum(diag(t2))/sum(t2)
+
+Yfit_t3=predict(fit3, newdata=train, type="class")
+t3<-table(train$y,Yfit_t3)
+mis_t3 <- 1-sum(diag(t3))/sum(t3)
+
+Yfit_v=predict(fit, newdata=valid, type="class")
+v1<-table(valid$y,Yfit_v)
+mis_v1<-1-sum(diag(v1))/sum(v1)
+
+Yfit_v2=predict(fit2, newdata=valid, type="class")
+v2<-table(valid$y,Yfit_v2)
+mis_v2<-1-sum(diag(v2))/sum(v2)
+
+Yfit_v3=predict(fit3, newdata=valid, type="class")
+v3<-table(valid$y,Yfit_v3)
+mis_v3<-1-sum(diag(v3))/sum(v3)
+
+
+print(mis_t1)
+print(mis_t2)
+print(mis_t3)
+print(mis_v1)
+print(mis_v2)
+print(mis_v3)
+
+
+
+```
+The best model among these three seems to be c, which changed the deviance. It lowered the misclassification rate for the training data, but increased it for the validation data. Not sure why.
+
+Changing deviance resulted in a much larger tree, probably because more values were allowed to be included even though the deviance was low (this is my guess). Setting minsize to 7000 made the tree smaller, as it didn't expand the last node, "housing", compared to the original tree. 
+
+Exercise 3
+```{r}
+trainScore=rep(0,50)
+testScore=rep(0,50)
+for(i in 2:50) {
+  prunedTree=prune.tree(fit3,best=i)
+  pred=predict(prunedTree, newdata=valid, type="tree")
+  trainScore[i]=deviance(prunedTree)
+  testScore[i]=deviance(pred)
+}
+plot(2:50, trainScore[2:50], type="b", col="red", ylim=c(min(testScore[-1]), max(trainScore[-1])))
+points(2:50, testScore[2:50], type="b", col="blue")
+print(which.min(testScore[2:50]))
+
 
 ```
 
+index 21, bör motsvara 19 löv. 20-22 ser ut att vara samma?
