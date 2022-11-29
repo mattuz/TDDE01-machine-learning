@@ -110,7 +110,47 @@ plot(2:50, trainScore[2:50], type="b", col="red", ylim=c(min(testScore[-1]), max
 points(2:50, testScore[2:50], type="b", col="blue")
 print(which.min(testScore[2:50]))
 
+finalTree=prune.tree(fit3, best=20)
+finalfit=predict(finalTree, newdata=valid, type="class")
+table(valid$y,finalfit)
+plot(finalTree)
+#text(fit3, pretty=0)
 
 ```
 
-index 21, bör motsvara 19 löv. 20-22 ser ut att vara samma?
+index 20-22, should represent 17-19 leaves. Looks like there's no difference on the data between 20-22, so all of these options should be equally good. 
+Information provided by tree structure? Not sure at all. 
+
+Exercise 4
+```{r}
+library(caret)
+
+ffitTest<-predict(finalTree, newdata=train, type="class")
+print(length(ffitTest))
+confusionMatrix(train$y,ffitTest, mode="everything")
+
+```
+Accuracy = .8959
+Recall = .9055
+F1 = .9437
+
+The accuracy is close to 90%, so the predictive power of the model seems to be quite good. 
+The F1 score is usually preferred when data is unbalanced (for instance, when the quantity of examples in one class outnumbers the ones from the other class).
+I think F1 is better in this regard (kolla detta). 
+
+
+```{r}
+tree5 <- tree(as.factor(y)~., data=train, mindev=0.0005)
+predtree5 <- predict(tree5, newdata=test, type="class")
+L = matrix(c(0,5,1,0), nrow=2, byrow=T)
+print(L)
+
+
+```
+if prob of "no" is 5x the probability of 1 then (läs på mer)
+
+```{r}
+
+```
+
+
