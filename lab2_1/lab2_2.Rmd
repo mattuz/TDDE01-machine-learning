@@ -126,7 +126,6 @@ Exercise 4
 library(caret)
 
 ffitTest<-predict(finalTree, newdata=train, type="class")
-print(length(ffitTest))
 confusionMatrix(train$y,ffitTest, mode="everything")
 
 ```
@@ -138,18 +137,34 @@ The accuracy is close to 90%, so the predictive power of the model seems to be q
 The F1 score is usually preferred when data is unbalanced (for instance, when the quantity of examples in one class outnumbers the ones from the other class).
 I think F1 is better in this regard (kolla detta). 
 
-
+Exercise 5
 ```{r}
+library(dplyr)
 tree5 <- tree(as.factor(y)~., data=train, mindev=0.0005)
-predtree5 <- predict(tree5, newdata=test, type="class")
-L = matrix(c(0,5,1,0), nrow=2, byrow=T)
-print(L)
+predtree5 <- predict(tree5, newdata=test, type="vector")
+#L = matrix(c(0,5,1,0), nrow=2, byrow=T)
+#probY=predict(tree5, type="response")
+probY <- predtree5[,2]
+probN <- predtree5[,1]
 
+pred5 <- ifelse(predtree5[,1]/predtree5[,2]>5, "Yes", "No")
+
+tab <- table(test$y, pred5)
+confusionMatrix(train$y,pred5, mode="everything")
 
 ```
-if prob of "no" is 5x the probability of 1 then (läs på mer)
+Dubbelkolla om det är rätt, se till att confusionmatrix funkar
 
+
+Exercise 6
 ```{r}
+optimalTree <- tree(as.factor(y)~., data=train, mindev=0.0005)
+optimalTree <- prune.tree(optimalTree, best=20)
+
+
+
+
+
 
 ```
 
