@@ -8,19 +8,6 @@ date: "2022-11-22"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
 rm(list = ls(all = TRUE))
@@ -29,110 +16,63 @@ shell("cls")
 
 data = read.csv(file = "communities.csv",
                 header = TRUE)
-head(data)
 
 index <- names(data) %in% "ViolentCrimesPerPop"
 
 data.scaled <- scale(x = data[, !index], 
                      center = TRUE, 
                      scale = TRUE)
-head(data.scaled)
 
 e = eigen(cov(data[, -1]))
-print(e)
 
 e.scaled = eigen(cov(data.scaled))
-print(e.scaled)
+
+cum_var = cumsum(e.scaled$values/sum(e.scaled$values))
+sum(cum_var<0.95)
+e.scaled$values[1:2]/sum(e.scaled$values)
 
 
-e.scaled$values               # Variances
-e.scaled$values/100             # proportion of variances
-cumsum(e.scaled$values/100)     # Cumulative proportion
-
-data.pc  = as.matrix(data.scaled) %*% e.scaled$vectors 
-head(data.pc)
-
-
-# 95% at 35, 25% and 17% (16.9)
 ```
+
+95% at 35, 25% and 17% (16.9)
 
 ```{r pressure, echo=FALSE}
 data = read.csv(file = "communities.csv",
                 header = TRUE)
-head(data)
+head(data.scaled)
 
 index <- names(data) %in% "ViolentCrimesPerPop"
 
 data.scaled <- scale(x = data[, !index], 
                      center = TRUE, 
                      scale = TRUE)
-res=prcomp(data.scaled)
-lambda=res$sdev^2
+pr=princomp(data.scaled)
+lambda=pr$sdev^2
 #eigenvalues
 lambda
 #proportion of variation
 sprintf("%2.3f",lambda/sum(lambda)*100)
-screeplot(res)
+screeplot(pr)
 
-U=res$rotation
-head(U)
+ev1 = pr$loadings[,1]
 
-plot(res$x[,1], res$x[,2], ylim=c(-5,15))
+ev1[order(abs(ev1),decreasing = TRUE)[1:5]]
+
 
 library(ggfortify)
 
-autoplot(res, data = data, colour = "ViolentCrimesPerPop", loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3)
+autoplot(pr, data = data, colour = "ViolentCrimesPerPop")
 
-plot(U[,1], main="Traceplot, PC1")
-plot(U[,2],main="Traceplot, PC2")
-
-
-
-res2 = princomp(data.scaled)
-
-
-res2
-plot(res2$scores[,1], res2$scores[,2], main="hej")
-
-U=res2$rotation
-
-
-
-pct_var_explained <- res2$sdev^2 / sum(res2$sdev^2)
-
-
-train <- data.frame(
-    predict(res2)[, cumsum(pct_var_explained) < 0.95]
-)
-model <- lm(Comp.34 ~ ., train)
-summary(model)
 ```
+Yes many features seem to have a relativly big contribution.
+
+The 5 values sound reasonable and should have a 
+logical relationship to the crime level
+
+the area up to left seems both most dense and the darkest, 
+a low pc1 seems to contibute alot toward lower VCPP
+
 Pov1 = 0.2502 Pov2 = 0.1693
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
-```{r pressure, echo=FALSE}
-get_RGB_colors <- function(y){
-  
-  R = y*255
-  G = (1-y)*255
-  B = 0
-  
-  alpha = 255
-  
-  RGB = rgb(R,G,B,alpha,maxColorValue = 255)
-  
-}
-res = princomp(data.scaled)
-cumsum(res$sdev ^ 2)
-colors = sapply(data$ViolentCrimesPerPop,get_RGB_colors)
-plot(res$scores[,1:2],col=colors,sub="points on gradient between green and red. Red is high crime rate", main = "Score Plot,  ")
-
-
-```
-
-
-
 
 
 
@@ -157,15 +97,82 @@ test.pred = predict(lr, df_test)
 
 summary(lr)
 
-mean((train.pred - df_train$ViolentCrimesPerPop) ^ 2)
-mean((test.pred - df_test$ViolentCrimesPerPop) ^ 2)
+sur_train = mean((train.pred - df_train$ViolentCrimesPerPop) ^ 2)
+sur_test = mean((test.pred - df_test$ViolentCrimesPerPop) ^ 2)
+
+sur_train
+sur_test
 
 ```
 
 ```{r pressure, echo=FALSE}
-opt <- function(omega){
-  optim(method = "BFGS")
-}  
+train_error <<- numeric(0)
+test_error <<-numeric(0)
+
+set.seed(12345)
+
+cost <- function(theta, train, acc_train, test, acc_test){
+  pred_train = train %*% theta
+  pred_test = test %*% theta
+  
+  
+  mse_train = mean((acc_train-pred_train)^2)
+  train_error <<- append(train_error,mse_train)
+  
+  mse_test = mean((acc_test - pred_test)^2)
+  test_error <<- append(test_error,mse_test)
+
+  return(mse_train)
+}
+
+
+
+trainy = as.matrix(df_train[,1:(dim(df_train)[2]-1)])
+acc_train = as.matrix(df_train['ViolentCrimesPerPop'])
+
+testy = as.matrix(df_test[,1:(dim(df_test)[2]-1)])
+acc_test = as.matrix(df_test['ViolentCrimesPerPop'])
+
+
+
+theta =numeric(dim(trainy)[2])
+theta = as.matrix(theta)
+
+
+opt = optim(par=theta,fn=cost,  train = trainy ,acc_train = acc_train, test=testy, acc_test=acc_test,method = "BFGS")
+
+opt_theta = opt$par
+
+train_opt_error = opt$value
+
+test_opt_error = mean((acc_test - (testy %*% opt_theta))^2)
+
+
+train_opt_error
+sur_train
+test_opt_error
+sur_test
+
+bl = c(TRUE,rep(FALSE,500))
+
+rest_train = train_error[bl]
+rest_test = test_error[bl]
+
+test_min_ind = which(test_error==min(test_error))
+test_min_ind
+min(test_error)
+
+test_opt_ind = which(test_error==test_opt_error)
+test_opt_ind
+test_opt_error
+
+
+plot(rest_train, xlim=c(0,length(rest_train)), ylim=c(0,1.5), col = "blue")
+points(rest_test, col="red")
+lines(c(0,1000), rep(sur_train, 2), col="blue")
+lines(c(0,1000), rep(sur_test, 2), col="red")
 
 ```
+Min test_error and the early stopping point appears at index 2183 with mse of 0.377.
+The results from the 3 task and the computed optimal values in this exercise are basically the same both in the plot and the printed results.
 
