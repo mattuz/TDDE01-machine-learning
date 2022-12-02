@@ -1,0 +1,171 @@
+---
+title: "lab2_3"
+output: html_document
+date: "2022-11-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+rm(list = ls(all = TRUE))
+graphics.off()
+shell("cls")
+
+data = read.csv(file = "communities.csv",
+                header = TRUE)
+head(data)
+
+index <- names(data) %in% "ViolentCrimesPerPop"
+
+data.scaled <- scale(x = data[, !index], 
+                     center = TRUE, 
+                     scale = TRUE)
+head(data.scaled)
+
+e = eigen(cov(data[, -1]))
+print(e)
+
+e.scaled = eigen(cov(data.scaled))
+print(e.scaled)
+
+
+e.scaled$values               # Variances
+e.scaled$values/100             # proportion of variances
+cumsum(e.scaled$values/100)     # Cumulative proportion
+
+data.pc  = as.matrix(data.scaled) %*% e.scaled$vectors 
+head(data.pc)
+
+
+# 95% at 35, 25% and 17% (16.9)
+```
+
+```{r pressure, echo=FALSE}
+data = read.csv(file = "communities.csv",
+                header = TRUE)
+head(data)
+
+index <- names(data) %in% "ViolentCrimesPerPop"
+
+data.scaled <- scale(x = data[, !index], 
+                     center = TRUE, 
+                     scale = TRUE)
+res=prcomp(data.scaled)
+lambda=res$sdev^2
+#eigenvalues
+lambda
+#proportion of variation
+sprintf("%2.3f",lambda/sum(lambda)*100)
+screeplot(res)
+
+U=res$rotation
+head(U)
+
+plot(res$x[,1], res$x[,2], ylim=c(-5,15))
+
+library(ggfortify)
+
+autoplot(res, data = data, colour = "ViolentCrimesPerPop", loadings = TRUE, loadings.label = TRUE, loadings.label.size = 3)
+
+plot(U[,1], main="Traceplot, PC1")
+plot(U[,2],main="Traceplot, PC2")
+
+
+
+res2 = princomp(data.scaled)
+
+
+res2
+plot(res2$scores[,1], res2$scores[,2], main="hej")
+
+U=res2$rotation
+
+
+
+pct_var_explained <- res2$sdev^2 / sum(res2$sdev^2)
+
+
+train <- data.frame(
+    predict(res2)[, cumsum(pct_var_explained) < 0.95]
+)
+model <- lm(Comp.34 ~ ., train)
+summary(model)
+```
+Pov1 = 0.2502 Pov2 = 0.1693
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r pressure, echo=FALSE}
+get_RGB_colors <- function(y){
+  
+  R = y*255
+  G = (1-y)*255
+  B = 0
+  
+  alpha = 255
+  
+  RGB = rgb(R,G,B,alpha,maxColorValue = 255)
+  
+}
+res = princomp(data.scaled)
+cumsum(res$sdev ^ 2)
+colors = sapply(data$ViolentCrimesPerPop,get_RGB_colors)
+plot(res$scores[,1:2],col=colors,sub="points on gradient between green and red. Red is high crime rate", main = "Score Plot,  ")
+
+
+```
+
+
+
+
+
+
+```{r pressure, echo=FALSE}
+df = read.csv("communities.csv") #reload the data.
+summary(df)
+
+#scale and split 50/50
+df = scale(df, TRUE, TRUE)
+set.seed(12345)
+
+n <- dim(df)[1]
+id <- sample(1:n,floor(n*0.5))
+df_train <- data.frame(df[id,])
+df_test <- data.frame(df[-id,])
+
+
+lr = lm(ViolentCrimesPerPop ~ .,df_train)
+
+train.pred = predict(lr, df_train)
+test.pred = predict(lr, df_test)
+
+summary(lr)
+
+mean((train.pred - df_train$ViolentCrimesPerPop) ^ 2)
+mean((test.pred - df_test$ViolentCrimesPerPop) ^ 2)
+
+```
+
+```{r pressure, echo=FALSE}
+opt <- function(omega){
+  optim(method = "BFGS")
+}  
+
+```
+

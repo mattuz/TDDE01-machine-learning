@@ -1,0 +1,359 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo=FALSE, warning=FALSE, results='hide'}
+#packages needed for the lab
+library(kknn)
+library(readxl)
+```
+
+#Exercise 1
+
+```{r, warning=FALSE, results='hide', echo=FALSE}
+
+data = read.csv("optdigits.csv", header = F)
+n = dim(data)[1]
+set.seed(12345)
+
+
+id=sample(1:n, floor(n*0.5))
+train=data[id,]
+
+id1=setdiff(1:n, id)
+set.seed(12345)
+
+id2=sample(id1, floor(n*0.25))
+valid=data[id2,]
+
+id3=setdiff(id1,id2)
+test=data[id3,]
+
+
+#Exercise 2
+
+
+k_test <- kknn(as.factor(V65)~., train = train, test = test, k = 30, kernel = "rectangular")
+k_train <- kknn(as.factor(V65)~., train = train, test = train, k = 30, kernel = "rectangular")
+k_valid <- kknn(as.factor(V65)~., train = train, test = valid, k = 30, kernel = "rectangular")
+
+test_table = table(k_test$fitted.values, as.factor(test$V65))
+train_table = table(k_train$fitted.values, train$V65)
+valid_table = table(k_valid$fitted.values, valid$V65)
+
+missclass = function(X, X1) {
+  n = length(X)
+  return (1 - sum(diag(table(X1, X)))/n)
+}
+
+missclass_test = missclass(k_test$fitted.values, as.factor(test$V65))
+missclass_train = missclass(train$V65, k_train$fitted.values)
+missclass_valid = missclass(k_valid$fitted.values, valid$V65)
+```
+Confusion matrices
+
+```{r, echo=T}
+test_table
+train_table 
+```
+
+Missclass Values
+```{r, echo=T}
+missclass_test
+missclass_train
+
+#Comment on the quality of predictions for different digits and on the overall prediction quality.
+
+#Vi tycker det och det
+```
+Exercise 3.a
+We found that 9, 7 and 4 hardest to classify.
+We found that 0, 2 were easiest to find.
+
+
+Exercise 3.b Reshape
+
+```{r, echo=F}
+
+prob_eight <- k_train$prob[, 9]
+
+ordered_high <- order(prob_eight, decreasing = T)
+ordered_high <- ordered_high[1:2]
+
+ordered_low <- order(prob_eight, decreasing = F)
+ordered_index <- which(prob_eight > 0)
+ordered_low <- ordered_low[1:3]
+  
+ordered_matrix <- c(ordered_high, ordered_low)
+
+my_heatmap <- matrix(as.numeric(train[13,1:64]), nrow=8,ncol=8, byrow = T)
+heatmap(my_heatmap, Colv = NA, Rowv = NA)
+print(as.numeric(train[13, 65]))
+
+for (i in ordered_matrix){
+  my_heatmap <- matrix(as.numeric(train[i,1:64]), nrow=8,ncol=8, byrow = T)
+  heatmap(my_heatmap, Colv = NA, Rowv = NA, main =train[i, 65])
+}
+#comment on whether these cases seem to be hard or easy to recognize visually. 
+
+#Vi tycker si och så
+
+```
+
+Exercise 4
+
+```{r, echo=F}
+train_miss_error <- numeric(30)
+val_miss_error <- numeric(30)
+
+
+for (i in 1:30){
+  k_valid <- kknn(as.factor(V65)~., train = train, test = valid, k = i, kernel = "rectangular")
+  k_train <- kknn(as.factor(V65)~., train = train, test = train, k = i, kernel = "rectangular")
+  
+  train_miss_error[i] <- missclass(k_train$fitted.values, train$V65)
+  val_miss_error[i] <- missclass(k_valid$fitted.values, valid$V65)
+  
+}
+
+plot = plot(c(1:30), train_miss_error, ylab = "train_miss_error", xlab = "k", col="pink")
+points(c(1:30), val_miss_error, col="green")
+
+#Simon t?nker att n?r de rosa cirklarna m?ter de gr?na s? ah rvi best k v?rde.
+# 3am 4 have the lowest validation error. The best k value is the lowest validaiton error.
+k_test <- kknn(as.factor(V65)~., train = train, test = test, k = 9, kernel = "rectangular")
+k_train <- kknn(as.factor(V65)~., train = train, test = train, k = 9, kernel = "rectangular")
+k_valid <- kknn(as.factor(V65)~., train = train, test = valid, k = 9, kernel = "rectangular")
+
+missclass_test = missclass(k_test$fitted.values, as.factor(test$V65))
+missclass_train = missclass(train$V65, k_train$fitted.values)
+missclass_valid = missclass(k_valid$fitted.values, valid$V65)
+```
+
+Skriv vad vi tkr om plotten
+
+
+Missclass Values
+```{r, echo=T}
+missclass_test
+missclass_train
+missclass_valid
+
+#How does the model complexity change when K increases and how does it affect the training and validation errors?
+
+#Vi tycker det och det
+```
+
+
+Exercise 5
+
+```{r, echo=F}
+cross.entropy <- function(p, phat){
+  x <- 0
+  for (i in 1:length(p)){
+    x <- x + (p[i] * log(phat[i]))
+  }
+  return(-x)
+}
+
+train_miss_error <- as.vector(matrix(0,ncol = 30))
+val_miss_error <- as.vector(matrix(0,ncol = 30))
+
+entropy_error <- as.vector(matrix(0,ncol = 30))
+
+for (i in 1:30){
+  k_valid <- kknn(as.factor(V65)~., train = train, test = valid, k = i, kernel = "rectangular")
+  k_train <- kknn(as.factor(V65)~., train = train, test = train, k = i, kernel = "rectangular")
+  
+  
+  for (j in 0:9){
+    cross_val <- valid$V65 == j
+    cross_train <- train$V65 == j
+    
+    TRUE_val <- (which(cross_val, useNames = T))
+    prob_val <- k_valid$prob[cross_val, as.character(j)] + 1e-15
+    
+    TRUE_train <- (which(cross_train, useNames = T))
+    prob_train <- k_train$prob[cross_train, as.character(j)] + 1e-15
+    
+    
+    val_miss_error[i] <- cross.entropy(TRUE_val, prob_val)
+    train_miss_error[i] <- cross.entropy(TRUE_train, prob_train)
+    
+    
+    
+    entropy_error[i] <- abs(val_miss_error[i]-train_miss_error[i])
+  }
+  
+}
+
+print(entropy_error)
+plot(c(1:30), entropy_error, ylab = "cross_entropy_error", xlab = "k", col="blue")
+which.min(entropy_error)
+
+#What is the optimal 𝐾𝐾 value here? Assuming that response has multinomial distribution, why might the cross-entropy be a more suitable choice of the error function than the misclassification error for this problem?
+
+#Vi tycker det och det
+```
+
+Assigment 2
+
+Excerice 1
+
+```{r, echo=F}
+parkin = read.csv("parkinsons.csv", header = T)
+parkin_corr <- data.frame(parkin[c(5,7:22)]) #Remove unused voice characteristics
+parkin_scaled <- as.data.frame(scale(parkin_corr))
+
+n = dim(parkin_corr)[1]
+set.seed(12345)
+
+id=sample(1:n, floor(n*0.6))
+train=parkin_scaled[id,]
+test=parkin_scaled[-id,]
+```
+Excercise 2
+
+```{r, echo=T}
+fit = lm(motor_UPDRS ~ ., data = train)
+sum = summary(fit)
+mean(sum$residuals^2)
+print(sum)
+
+# The variables p-values that are higher than 0.05 does not contribute at all.
+
+```
+Exercise3
+
+```{r, echo=F}
+log_likelihood <- function(train, Y, theta, sigma){
+
+  n <- dim(train)[1] 
+  train_theta = train%*%theta
+
+  sum1 <- n*log(sigma^2)/2
+  sum2 <- n*log(2*pi)/2
+  sum3 <- sum((train_theta-Y)^2) 
+  sum4 <- sum3/(2*sigma^2)
+  
+  return (-sum1-sum2-sum4)
+}
+
+
+ridge <- function(train, theta, lambda, Y){
+  n<-dim(train)[2]
+  sigma <- theta[n+1]
+  theta <-as.matrix(theta[1:n])
+  log_like <- log_likelihood(theta=theta,Y=Y,sigma=sigma,train=train)
+  ridge <- -log_like + lambda*sum(theta^2)
+  return(ridge)
+  
+}                                     
+
+ridgeOpt <- function(lambda, train, Y){
+  
+  train <- as.matrix(train)
+  N = dim(train)[2] 
+  init_theta = numeric(N)
+  init_sigma = 1
+  opt <- optim(par = c(init_theta, sigma), fn = ridge, lambda = lambda, train = train, Y = Y, method = "BFGS")
+  return(opt)
+} 
+
+dF <- function(X, lambda){
+  #From the course formula
+  X <- as.matrix(X)
+  Xt <- t(X)
+  n <- dim(X)[2]
+  I <- diag(n)
+  P <- X%*%solve((Xt%*%X + (lambda*I)))%*%Xt
+  return(sum(diag(P)))
+} 
+```
+
+```{r, echo=F}
+  AIC = function(train,Y,theta, sigma, lambda){
+    log_like = log_likelihood(train = train, Y=Y, theta = theta, sigma = sigma)
+    N = dim(train)[1] # No of data points
+    df = Fd(train,lambda)
+    aic = (-2*log_like/N) + (2*df/N) #(-2*Log-likelihood/N) + 2*(df/N)
+    return(aic)
+  }
+```
+
+Exercise 4
+
+```{r, echo=T}
+xtrain<-as.matrix(train[2:17])
+ytrain<-as.matrix(train[1])
+xtest=as.matrix(test[2:17])
+ytest<-as.matrix(test[1])
+
+
+for (lambda in c(1, 100, 1000)){
+  opt = ridgeOpt(lambda, xtrain, ytrain)
+  theta <- as.matrix(opt$par[1:16]) #theta optimized
+  sigma<- opt$par[17]
+  MSE_train = mean((xtrain%*%theta - ytrain)^2)
+  MSE_test = mean((xtest%*%theta - ytest)^2)
+  aic = AIC(train=xtrain,Y= ytrain,theta = theta,sigma= sigma, lambda= lambda)
+  print(paste("Lambda:",lambda))
+  print(paste("TrainMSE:",MSE_train))
+  print(paste("TestMSE:",MSE_train))
+  print(paste("AIC:", aic))
+
+
+}
+
+#Which penalty parameter is most appropriate among the selected ones? Compute and compare the degrees of freedom of these models and make appropriate conclusions.
+
+#We have read that to find the best aic value among mutiple aic values is the lowest. In our example it seems like lambda = 1 and lambda = 100 gives similar aic values
+
+```
+for (lambda in c(1, 100, 1000)){
+  ridge_opt = ridgeOpt(lambda,Xtrain, motomoto)
+  print(ridge_opt)
+  
+}
+
+Assignment 3.
+
+```{r, echo=T}
+
+prime = read.csv("pima-indians-diabetes.csv", header = F)
+head(prime)
+summary(prime)
+set.seed(12345)
+
+#ex 1
+coloor <- function(x){
+  if (x==1){
+    c = "red"
+  } else{
+    c="green"
+  } 
+  return(c)
+}  
+
+#seems to be diff, no obvious correlation between the variables.
+#Making a linear regresssion would not provide a meaningful line. 
+coloors = sapply(prime$V9, coloor)
+plot(prime$V8, prime$V2, ylab = "Plasma", xlab = "Age", main = "doabets", col = coloors)
+```
+
+ex 2
+
+```{r, echo=T}
+
+m1 = glm(V9~ V2 + V8, prime, family = "binomial" )
+prob=predict(m1, type="response")
+pred=ifelse(Prob>0.5, "")
+
+```
+
