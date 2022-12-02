@@ -1,5 +1,5 @@
 ---
-title: "lab2_1"
+title: "lab2"
 output: html_document
 date: "2022-11-22"
 ---
@@ -31,12 +31,12 @@ MSE_train
 ```
 Comment on the quality of fit and prediction and therefore on the quality of model
  
-If we calculate the mean square error of the training prediction vs the test prediction we see that we get extremely high error from test compare to training. This means that the model is very specific for the data that it is trained on. Which means that the quality of the model is not great for predicting other than particularity the trainig data.
+If we calculate the mean square error of the training prediction vs the test prediction we see that we get extremely high error from test compare to training. This means that the model is very specific for the data that it is trained on. Which means that the quality of the model is not great for predicting other than particularity the training data. Overfitting.
 
 Exercise 2
 L1 (also called lasso) regression model 
 
-L1 Cost function looks like this from the cours elitterature:
+L1 Cost function looks like this from the course elitterature:
 
 
 ![Alt](exercise2image.jpg)
@@ -71,6 +71,7 @@ ynew=predict(model_lasso, newx=as.matrix(x), type="response")
 ```
 You can not gather much information from ridge regression plot.
 
+In ridge regression plot we can clearly see that the coefficients are penalized in a way that makes the least effective in the estimation shrink faster. In the lasso regression plot we cannot make any conclusions about the coefficients in the same way. However, we can draw conclusions about the features being used depending on the log-lambda values.
 
 Exercise 5
 ```{r, warning=FALSE}
@@ -96,3 +97,222 @@ We interpret that the lambda_min is the optimal lambda and uses a model of 9 fea
 It would seem that they have the same amount of CV-score but the optmal lambda uses less model features.Therefor it would not generate significantly better predictions then lambda = -4.
 
 Using the scatter plot we conclude that the predictions are very good where they predict almost in the same place as the original data.
+
+Task 2.
+
+Exercise 1
+```{r}
+
+d = read.csv("bank-full.csv", sep = ";", stringsAsFactors = TRUE)
+data = d
+data$duration = c() #remove duration column
+output = d['y']
+n = dim(data)[1]
+
+n=dim(data)[1]
+set.seed(12345)
+id=sample(1:n, floor(n*0.4))
+train=data[id,]
+
+id1=setdiff(1:n, id)
+set.seed(12345)
+id2=sample(id1, floor(n*0.3))
+valid=data[id2,]
+
+id3=setdiff(id1,id2)
+test=data[id3,] 
+
+
+```
+
+
+Exercise 2
+```{r}
+library(tree)
+fit=tree(as.factor(y)~., data=train)
+plot(fit)
+text(fit, pretty=0)
+summary(fit)
+
+fit2=tree(as.factor(y)~., data=train, minsize=7000)
+plot(fit2)
+text(fit2, pretty=0)
+summary(fit2)
+
+fit3=tree(as.factor(y)~., data=train, mindev=0.0005)
+plot(fit3)
+text(fit3, pretty=0)
+summary(fit3)
+
+
+
+```
+Misclassification rate
+```{r}
+Yfit_t=predict(fit, newdata=train, type="class")
+t1<-table(train$y,Yfit_t)
+mis_t1 <- 1-sum(diag(t1))/sum(t1)
+
+Yfit_t2=predict(fit2, newdata=train, type="class")
+t2<-table(train$y,Yfit_t2)
+mis_t2 <- 1-sum(diag(t2))/sum(t2)
+
+Yfit_t3=predict(fit3, newdata=train, type="class")
+t3<-table(train$y,Yfit_t3)
+mis_t3 <- 1-sum(diag(t3))/sum(t3)
+
+Yfit_v=predict(fit, newdata=valid, type="class")
+v1<-table(valid$y,Yfit_v)
+mis_v1<-1-sum(diag(v1))/sum(v1)
+
+Yfit_v2=predict(fit2, newdata=valid, type="class")
+v2<-table(valid$y,Yfit_v2)
+mis_v2<-1-sum(diag(v2))/sum(v2)
+
+Yfit_v3=predict(fit3, newdata=valid, type="class")
+v3<-table(valid$y,Yfit_v3)
+mis_v3<-1-sum(diag(v3))/sum(v3)
+
+
+print(mis_t1)
+print(mis_t2)
+print(mis_t3)
+print(mis_v1)
+print(mis_v2)
+print(mis_v3)
+
+
+
+```
+The best model among these three seems to be c, which changed the deviance. It lowered the misclassification rate for the training data, but increased it for the validation data. Not sure why.
+
+Changing deviance resulted in a much larger tree, probably because more values were allowed to be included even though the deviance was low (this is my guess). Setting minsize to 7000 made the tree smaller, as it didn't expand the last node, "housing", compared to the original tree. 
+
+Exercise 3
+```{r}
+trainScore=rep(0,50)
+testScore=rep(0,50)
+for(i in 2:50) {
+  prunedTree=prune.tree(fit3,best=i)
+  pred=predict(prunedTree, newdata=valid, type="tree")
+  trainScore[i]=deviance(prunedTree)
+  testScore[i]=deviance(pred)
+}
+plot(2:50, trainScore[2:50], type="b", col="red", ylim=c(min(testScore[-1]), max(trainScore[-1])))
+points(2:50, testScore[2:50], type="b", col="blue")
+print(which.min(testScore[2:50]))
+
+finalTree=prune.tree(fit3, best=20)
+finalfit=predict(finalTree, newdata=valid, type="class")
+table(valid$y,finalfit)
+plot(finalTree)
+#text(fit3, pretty=0)
+
+```
+
+index 20-22, should represent 17-19 leaves. Looks like there's no difference on the data between 20-22, so all of these options should be equally good. 
+Information provided by tree structure? Not sure at all. 
+
+Exercise 4
+```{r}
+library(caret)
+
+ffitTest<-predict(finalTree, newdata=train, type="class")
+confusionMatrix(train$y,ffitTest, mode="everything")
+
+```
+Accuracy = .8959
+Recall = .9055
+F1 = .9437
+
+The accuracy is close to 90%, so the predictive power of the model seems to be quite good. 
+The F1 score is usually preferred when data is unbalanced (for instance, when the quantity of examples in one class outnumbers the ones from the other class).
+I think F1 is better in this regard (kolla detta). 
+
+Exercise 5
+```{r}
+library(dplyr)
+tree5 <- tree(as.factor(y)~., data=train, mindev=0.0005)
+predtree5 <- predict(tree5, newdata=test, type="vector")
+#L = matrix(c(0,5,1,0), nrow=2, byrow=T)
+#probY=predict(tree5, type="response")
+probY <- predtree5[,2]
+probN <- predtree5[,1]
+
+pred5 <- ifelse(probY/probN>5, "yes", "no")
+
+tab <- table(test$y, pred5)
+confusionMatrix(test$y,as.factor(pred5), mode="everything")
+
+```
+Accuracy = .8869
+Recall = .88930
+F1 = .93959
+
+All of the values has lowered in comparison to those in exercise 4. This is because we used a loss matrix which in turn might have made it harder to predict the values. 
+
+Exercise 6
+```{r}
+optimalTree <- tree(as.factor(y)~., data=train, mindev=0.0005)
+optimalTree <- prune.tree(optimalTree, best=20)
+
+pi <- seq(0.05, 0.95, 0.05)
+
+logic_model <- glm(as.factor(y)~.,data = train  ,family="binomial")
+pred6_probY = predict(logic_model, newdata = test, type = "response")
+pred6_probN = 1 -pred6_probY
+print(pred6_probY)
+
+tree_pred = predict(optimalTree, newdata = test, type = "vector")
+
+fpr_1 <- c(1:length(pi))
+tpr_1 <- c(1:length(pi))
+fpr_2 <- c(1:length(pi))
+tpr_2 <- c(1:length(pi))
+
+
+for (i in 1:length(pi)){
+  
+  #Tree
+  tpr_1[i] = 0
+  fpr_1[i] = 0
+  pred6 <- ifelse(tree_pred[,2]>pi[i],  "yes", "no")
+  pred6_matrix <- table(pred6, test$y)
+  
+  
+  #Logistic regression#
+  tpr_2[i] = 0
+  fpr_2[i] = 0
+  pred6_logic <- ifelse(pred6_probY > pi[i], "yes", "no")
+  pred6_logic_matrix <- table(pred6_logic, test$y)
+
+  
+  
+  
+  
+  
+  if(nrow(pred6_matrix) > 1){
+    tpr_1[i] <- pred6_matrix[2,2] / (pred6_matrix[2,1]+pred6_matrix[2,2])
+    fpr_1[i] <- (pred6_matrix[1,2] / (pred6_matrix[1,1]+pred6_matrix[1,2]))
+ 
+  }else {
+    fpr_1[i] <- (pred6_matrix[1,2] / (pred6_matrix[1,1])) #No values for tpr
+  }
+  
+}
+
+
+  
+print(tpr_1)
+print(fpr_1)
+
+cut_fpr = fpr_1[1:15]
+cut_tpr = tpr_1[1:15]
+plot(c(0, fpr_1, 1),c(0, tpr_1, 1), type='b',xlim = c(0,1),
+     xlab='FPR', ylab='TPR', col='red')
+
+
+```
+This curve seems to be pretty bad, mainly because the FPR/TPR values does not come close enough to 1 (mainly FPR). Therefore the prediction of the curve fails after FPR~.012
+
+
