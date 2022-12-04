@@ -1,14 +1,6 @@
----
-title: "lab2_3"
-output: html_document
-date: "2022-11-22"
----
+TASK 3
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
+Exercise 1
 ```{r pressure, echo=FALSE}
 rm(list = ls(all = TRUE))
 graphics.off()
@@ -36,6 +28,7 @@ e.scaled$values[1:2]/sum(e.scaled$values)
 
 95% at 35, 25% and 17% (16.9)
 
+Exercise 2
 ```{r pressure,warning=FALSE, echo=FALSE}
 data = read.csv(file = "communities.csv",
                 header = TRUE)
@@ -46,12 +39,14 @@ data.scaled <- scale(x = data[, !index],
                      center = TRUE, 
                      scale = TRUE)
 pr=princomp(data.scaled)
-lambda=pr$sdev^2
+
 #eigenvalues
-lambda
+lambda=pr$sdev^2
+
+
 #proportion of variation
-sprintf("%2.3f",lambda/sum(lambda)*100)
-screeplot(pr)
+var = sprintf("%2.3f",lambda/sum(lambda)*100)
+
 
 ev1 = pr$loadings[,1]
 
@@ -63,7 +58,7 @@ library(ggfortify)
 autoplot(pr, data = data, colour = "ViolentCrimesPerPop")
 
 ```
-Yes many features seem to have a relativly big contribution.
+Yes many features seem to have a relatively big contribution.
 
 The 5 values sound reasonable and should have a 
 logical relationship to the crime level
@@ -74,10 +69,9 @@ a low pc1 seems to contibute alot toward lower VCPP
 Pov1 = 0.2502 Pov2 = 0.1693
 
 
-
+Exercise 3
 ```{r pressure, echo=FALSE}
 df = read.csv("communities.csv") #reload the data.
-summary(df)
 
 #scale and split 50/50
 df = scale(df, TRUE, TRUE)
@@ -94,16 +88,24 @@ lr = lm(ViolentCrimesPerPop ~ .,df_train)
 train.pred = predict(lr, df_train)
 test.pred = predict(lr, df_test)
 
-summary(lr)
+train_MSE = mean((train.pred - df_train$ViolentCrimesPerPop) ^ 2)
+test_MSE = mean((test.pred - df_test$ViolentCrimesPerPop) ^ 2)
 
-sur_train = mean((train.pred - df_train$ViolentCrimesPerPop) ^ 2)
-sur_test = mean((test.pred - df_test$ViolentCrimesPerPop) ^ 2)
-
-sur_train
-sur_test
+print("Train error")
+train_MSE
+print("Test error")
+test_MSE
 
 ```
 
+Compute training and test errors for these data and
+comment on the quality of model.
+
+The the error for both test and train seems to be high. It is a complex case with a lot of affecting factors so some errors are to be expected.
+The difference between train and test does not seem to be that big which indicates a relatively well fitted model.
+
+
+Exercise 4
 ```{r pressure, echo=FALSE}
 train_error <<- numeric(0)
 test_error <<-numeric(0)
@@ -138,7 +140,7 @@ theta =numeric(dim(trainy)[2])
 theta = as.matrix(theta)
 
 
-opt = optim(par=theta,fn=cost,  train = trainy ,acc_train = acc_train, test=testy, acc_test=acc_test,method = "BFGS")
+opt = optim(par=theta,fn=cost, train = trainy, acc_train = acc_train, test=testy, acc_test=acc_test,method = "BFGS")
 
 opt_theta = opt$par
 
@@ -146,32 +148,34 @@ train_opt_error = opt$value
 
 test_opt_error = mean((acc_test - (testy %*% opt_theta))^2)
 
-
+print("calculated optimal train")
 train_opt_error
-sur_train
+print("Lm train error")
+train_MSE
+
+print("calculated optimal test")
 test_opt_error
-sur_test
+print("Lm test error")
+test_MSE
 
-bl = c(TRUE,rep(FALSE,500))
+excluded = c(TRUE,rep(FALSE,500))
 
-rest_train = train_error[bl]
-rest_test = test_error[bl]
+rest_train = train_error[excluded]
+rest_test = test_error[excluded]
 
 test_min_ind = which(test_error==min(test_error))
+
+print("Early stopping index and MSE")
 test_min_ind
 min(test_error)
 
-test_opt_ind = which(test_error==test_opt_error)
-test_opt_ind
-test_opt_error
-
-
 plot(rest_train, xlim=c(0,length(rest_train)), ylim=c(0,1.5), col = "blue")
 points(rest_test, col="red")
-lines(c(0,1000), rep(sur_train, 2), col="blue")
-lines(c(0,1000), rep(sur_test, 2), col="red")
+lines(c(0,1000), rep(train_MSE, 2), col="blue")
+lines(c(0,1000), rep(test_MSE, 2), col="red")
 
 ```
-Min test_error and the early stopping point appears at index 2183 with mse of 0.377.
-The results from the 3 task and the computed optimal values in this exercise are basically the same both in the plot and the printed results.
+Min test_error and the early stopping point appears at index 2183 with MSE of 0.377.
+The results from the 3rd task and the computed optimal values in this exercise are basically the same both in the plot and the printed results.
+We can also see that the test error as indicated by the early stopping point did reach a lower error rate at an earlier theta but this is with a higher train error. 
 
