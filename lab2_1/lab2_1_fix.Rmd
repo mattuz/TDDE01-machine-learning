@@ -6,9 +6,14 @@ date: "2022-11-22"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(glmnet)
+library(tree)
+library(caret)
+library(dplyr)
+
 ```
 
-```{r}
+```{r, echo=FALSE}
 tecator = read.csv("tecator.csv", header = T)
 n = dim(tecator)[1]
 set.seed(12345)
@@ -41,13 +46,13 @@ L1 (also called lasso) regression model
 L1 Cost function looks like this from the course elitterature:
 
 
-![Alt](exercise2image.jpg)
+![](exercise2image.jpg)
 
 
 
 
-```{r, dev='png',warning=FALSE, fig.show='hide'}
-library(glmnet)
+```{r, dev='png',warning=FALSE, echo=FALSE}
+
 y = train$Fat
 x = train[1:100]
 model_lasso= glmnet(as.matrix(x), as.matrix(y), alpha=1,family="gaussian")
@@ -103,7 +108,7 @@ Using the scatter plot we conclude that the predictions are very good where they
 Task 2.
 
 Exercise 1
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 
 d = read.csv("bank-full.csv", sep = ";", stringsAsFactors = TRUE)
 data = d
@@ -129,26 +134,26 @@ test=data[id3,]
 
 
 Exercise 2
-```{r, echo=FALSE}
-library(tree)
+```{r, echo=FALSE, warning=FALSE}
+
 fit=tree(as.factor(y)~., data=train)
 plot(fit)
 text(fit, pretty=0)
-summary(fit)
+
 
 fit2=tree(as.factor(y)~., data=train, minsize=7000)
 plot(fit2)
 text(fit2, pretty=0)
-summary(fit2)
+
 
 fit3=tree(as.factor(y)~., data=train, mindev=0.0005)
 plot(fit3)
 text(fit3, pretty=0)
-summary(fit3)
+
 
 ```
 Misclassification rate
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 Yfit_t=predict(fit, newdata=train, type="class")
 t1<-table(train$y,Yfit_t)
 mis_t1 <- 1-sum(diag(t1))/sum(t1)
@@ -192,7 +197,7 @@ The best model among these three seems to be c, which changed the deviance. It l
 Changing deviance resulted in a much larger tree, probably because more values were allowed to be included even though the deviance was low (this is my guess). Setting minsize to 7000 made the tree smaller, as it didn't expand the last node, "housing", compared to the original tree. 
 
 Exercise 3
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 trainScore=rep(0,50)
 testScore=rep(0,50)
 for(i in 2:50) {
@@ -207,7 +212,7 @@ print(which.min(testScore[2:50]))
 
 finalTree=prune.tree(fit3, best=20)
 finalfit=predict(finalTree, newdata=valid, type="class")
-table(valid$y,finalfit)
+tab = table(valid$y,finalfit)
 plot(finalTree)
 #text(fit3, pretty=0)
 
@@ -217,11 +222,11 @@ index 20-22, should represent 17-19 leaves. Looks like there's no difference on 
 Information provided by tree structure? Not sure at all. 
 
 Exercise 4
-```{r, echo=FALSE}
-library(caret)
+```{r, echo=FALSE, warning=FALSE}
+
 
 ffitTest<-predict(finalTree, newdata=train, type="class")
-confusionMatrix(train$y,ffitTest, mode="everything")
+conf_mat = confusionMatrix(train$y,ffitTest, mode="everything")
 
 ```
 Accuracy = .8959
@@ -233,8 +238,10 @@ The F1 score is usually preferred when data is unbalanced (for instance, when th
 I think F1 is better in this regard (kolla detta). 
 
 Exercise 5
-```{r, echo=FALSE}
-library(dplyr)
+```{r, echo=FALSE, warning=FALSE}
+
+
+
 tree5 <- tree(as.factor(y)~., data=train, mindev=0.0005)
 predtree5 <- predict(tree5, newdata=test, type="vector")
 #L = matrix(c(0,5,1,0), nrow=2, byrow=T)
@@ -245,17 +252,19 @@ probN <- predtree5[,1]
 pred5 <- ifelse(probY/probN>5, "yes", "no")
 
 tab <- table(test$y, pred5)
-confusionMatrix(test$y,as.factor(pred5), mode="everything")
+conf2_mat = confusionMatrix(test$y,as.factor(pred5), mode="everything")
 
 ```
 Accuracy = .8869
+
 Recall = .88930
+
 F1 = .93959
 
 All of the values has lowered in comparison to those in exercise 4. This is because we used a loss matrix which in turn might have made it harder to predict the values. 
 
 Exercise 6
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 optimalTree <- tree(as.factor(y)~., data=train, mindev=0.0005)
 optimalTree <- prune.tree(optimalTree, best=20)
 
@@ -315,12 +324,10 @@ We tried this with the logistic regression as well, which gave the same result.
 
 The precision-recall curve might be a better option if there are more data points available, which would make the plot more accurate. 
 
-
-
 TASK 3
 
 Exercise 1
-```{r pressure, echo=FALSE}
+```{r ,echo=FALSE, warning=FALSE}
 rm(list = ls(all = TRUE))
 graphics.off()
 shell("cls")
@@ -348,7 +355,7 @@ e.scaled$values[1:2]/sum(e.scaled$values)
 95% at 35, 25% and 17% (16.9)
 
 Exercise 2
-```{r pressure,warning=FALSE, echo=FALSE}
+```{r, warning=FALSE, echo=FALSE}
 data = read.csv(file = "communities.csv",
                 header = TRUE)
 
@@ -389,7 +396,7 @@ Pov1 = 0.2502 Pov2 = 0.1693
 
 
 Exercise 3
-```{r pressure, echo=FALSE}
+```{r echo=FALSE}
 df = read.csv("communities.csv") #reload the data.
 
 #scale and split 50/50
@@ -420,11 +427,12 @@ test_MSE
 Compute training and test errors for these data and
 comment on the quality of model.
 
-The the error for both test and train seems to be high. 
+The the error for both test and train seems to be high. It is a complex case with a lot of affecting factors so some errors are to be expected.
+The difference between train and test does not seem to be that big which indicates a relatively well fitted model.
 
 
 Exercise 4
-```{r pressure, echo=FALSE}
+```{r echo=FALSE}
 train_error <<- numeric(0)
 test_error <<-numeric(0)
 
@@ -458,7 +466,7 @@ theta =numeric(dim(trainy)[2])
 theta = as.matrix(theta)
 
 
-opt = optim(par=theta,fn=cost,  train = trainy ,acc_train = acc_train, test=testy, acc_test=acc_test,method = "BFGS")
+opt = optim(par=theta,fn=cost, train = trainy, acc_train = acc_train, test=testy, acc_test=acc_test,method = "BFGS")
 
 opt_theta = opt$par
 
@@ -466,32 +474,33 @@ train_opt_error = opt$value
 
 test_opt_error = mean((acc_test - (testy %*% opt_theta))^2)
 
-
+print("calculated optimal train")
 train_opt_error
-sur_train
+print("Lm train error")
+train_MSE
+
+print("calculated optimal test")
 test_opt_error
-sur_test
+print("Lm test error")
+test_MSE
 
-bl = c(TRUE,rep(FALSE,500))
+excluded = c(TRUE,rep(FALSE,500))
 
-rest_train = train_error[bl]
-rest_test = test_error[bl]
+rest_train = train_error[excluded]
+rest_test = test_error[excluded]
 
 test_min_ind = which(test_error==min(test_error))
+
+print("Early stopping index and MSE")
 test_min_ind
 min(test_error)
 
-test_opt_ind = which(test_error==test_opt_error)
-test_opt_ind
-test_opt_error
-
-
 plot(rest_train, xlim=c(0,length(rest_train)), ylim=c(0,1.5), col = "blue")
 points(rest_test, col="red")
-lines(c(0,1000), rep(sur_train, 2), col="blue")
-lines(c(0,1000), rep(sur_test, 2), col="red")
+lines(c(0,1000), rep(train_MSE, 2), col="blue")
+lines(c(0,1000), rep(test_MSE, 2), col="red")
 
 ```
-Min test_error and the early stopping point appears at index 2183 with mse of 0.377.
-The results from the 3 task and the computed optimal values in this exercise are basically the same both in the plot and the printed results.
-
+Min test_error and the early stopping point appears at index 2183 with MSE of 0.377.
+The results from the 3rd task and the computed optimal values in this exercise are basically the same both in the plot and the printed results.
+We can also see that the test error as indicated by the early stopping point did reach a lower error rate at an earlier theta but this is with a higher train error. 
