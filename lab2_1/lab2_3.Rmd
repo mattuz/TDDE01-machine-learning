@@ -36,10 +36,9 @@ e.scaled$values[1:2]/sum(e.scaled$values)
 
 95% at 35, 25% and 17% (16.9)
 
-```{r pressure, echo=FALSE}
+```{r pressure,warning=FALSE, echo=FALSE}
 data = read.csv(file = "communities.csv",
                 header = TRUE)
-head(data.scaled)
 
 index <- names(data) %in% "ViolentCrimesPerPop"
 
