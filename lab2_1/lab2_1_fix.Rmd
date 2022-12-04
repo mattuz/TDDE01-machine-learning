@@ -46,7 +46,7 @@ L1 Cost function looks like this from the course elitterature:
 
 
 
-```{r, dev='png', fig.show='hide'}
+```{r, dev='png',warning=FALSE, fig.show='hide'}
 library(glmnet)
 y = train$Fat
 x = train[1:100]
@@ -61,7 +61,7 @@ What value of the penalty factor can be chosen if we want to select model with o
 From my interpretation, to select a model with 3 feature you need to pick a log-lambda value of -0.5.
 
 Exercise 4
-```{r}
+```{r, echo=FALSE}
 
 y = train$Fat
 x = train[1:100]
@@ -76,7 +76,7 @@ You can not gather much information from ridge regression plot.
 In ridge regression plot we can clearly see that the coefficients are penalized in a way that makes the least effective in the estimation shrink faster. In the lasso regression plot we cannot make any conclusions about the coefficients in the same way. However, we can draw conclusions about the features being used depending on the log-lambda values.
 
 Exercise 5
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE}
 
 
 model_lasso= cv.glmnet(as.matrix(x), as.matrix(y), alpha=1,family="gaussian")
@@ -103,7 +103,7 @@ Using the scatter plot we conclude that the predictions are very good where they
 Task 2.
 
 Exercise 1
-```{r}
+```{r, echo=FALSE}
 
 d = read.csv("bank-full.csv", sep = ";", stringsAsFactors = TRUE)
 data = d
@@ -129,7 +129,7 @@ test=data[id3,]
 
 
 Exercise 2
-```{r}
+```{r, echo=FALSE}
 library(tree)
 fit=tree(as.factor(y)~., data=train)
 plot(fit)
@@ -145,8 +145,6 @@ fit3=tree(as.factor(y)~., data=train, mindev=0.0005)
 plot(fit3)
 text(fit3, pretty=0)
 summary(fit3)
-
-
 
 ```
 Misclassification rate
@@ -176,11 +174,14 @@ v3<-table(valid$y,Yfit_v3)
 mis_v3<-1-sum(diag(v3))/sum(v3)
 
 
+print("1) Training and validation")
 print(mis_t1)
-print(mis_t2)
-print(mis_t3)
 print(mis_v1)
+print("2) Training and validation")
+print(mis_t2)
 print(mis_v2)
+print("3) Training and validation")
+print(mis_t3)
 print(mis_v3)
 
 
@@ -191,7 +192,7 @@ The best model among these three seems to be c, which changed the deviance. It l
 Changing deviance resulted in a much larger tree, probably because more values were allowed to be included even though the deviance was low (this is my guess). Setting minsize to 7000 made the tree smaller, as it didn't expand the last node, "housing", compared to the original tree. 
 
 Exercise 3
-```{r}
+```{r, echo=FALSE}
 trainScore=rep(0,50)
 testScore=rep(0,50)
 for(i in 2:50) {
@@ -216,7 +217,7 @@ index 20-22, should represent 17-19 leaves. Looks like there's no difference on 
 Information provided by tree structure? Not sure at all. 
 
 Exercise 4
-```{r}
+```{r, echo=FALSE}
 library(caret)
 
 ffitTest<-predict(finalTree, newdata=train, type="class")
@@ -232,7 +233,7 @@ The F1 score is usually preferred when data is unbalanced (for instance, when th
 I think F1 is better in this regard (kolla detta). 
 
 Exercise 5
-```{r}
+```{r, echo=FALSE}
 library(dplyr)
 tree5 <- tree(as.factor(y)~., data=train, mindev=0.0005)
 predtree5 <- predict(tree5, newdata=test, type="vector")
@@ -263,7 +264,6 @@ pi <- seq(0.05, 0.95, 0.05)
 logic_model <- glm(as.factor(y)~.,data = train  ,family="binomial")
 pred6_probY = predict(logic_model, newdata = test, type = "response")
 pred6_probN = 1 -pred6_probY
-print(pred6_probY)
 
 tree_pred = predict(optimalTree, newdata = test, type = "vector")
 
@@ -287,16 +287,9 @@ for (i in 1:length(pi)){
   fpr_2[i] = 0
   pred6_logic <- ifelse(pred6_probY > pi[i], "yes", "no")
   pred6_logic_matrix <- table(pred6_logic, test$y)
-  print(pred6_logic_matrix)
   
   tpr_2[i] <- pred6_logic_matrix[2,2] / (pred6_logic_matrix[2,1]+pred6_logic_matrix[2,2])
   fpr_2[i] <- (pred6_logic_matrix[1,2] / (pred6_logic_matrix[1,1]+pred6_logic_matrix[1,2]))
-
-  
-  
-  
-  
-  
   if(nrow(pred6_matrix) > 1){
     tpr_1[i] <- pred6_matrix[2,2] / (pred6_matrix[2,1]+pred6_matrix[2,2])
     fpr_1[i] <- (pred6_matrix[1,2] / (pred6_matrix[1,1]+pred6_matrix[1,2]))
@@ -306,11 +299,6 @@ for (i in 1:length(pi)){
   }
   
 }
-
-
-  
-print(tpr_1)
-print(fpr_1)
 
 cut_fpr = fpr_1[1:15]
 cut_tpr = tpr_1[1:15]
