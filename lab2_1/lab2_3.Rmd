@@ -178,4 +178,3 @@ lines(c(0,1000), rep(test_MSE, 2), col="red")
 Min test_error and the early stopping point appears at index 2183 with MSE of 0.377.
 The results from the 3rd task and the computed optimal values in this exercise are basically the same both in the plot and the printed results.
 We can also see that the test error as indicated by the early stopping point did reach a lower error rate at an earlier theta but this is with a higher train error. 
-
