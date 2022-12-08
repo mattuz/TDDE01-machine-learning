@@ -147,10 +147,10 @@ predtree5 <- predict(tree5, newdata=test, type="vector")
 probY <- predtree5[,2]
 probN <- predtree5[,1]
 
-pred5 <- ifelse(predtree5[,1]/predtree5[,2]>5, "Yes", "No")
+pred5 <- ifelse(probY/probN>5, "yes", "no")
 
 tab <- table(test$y, pred5)
-confusionMatrix(train$y,pred5, mode="everything")
+confusionMatrix(test$y,as.factor(pred5), mode="everything")
 
 ```
 Dubbelkolla om det är rätt, se till att confusionmatrix funkar
