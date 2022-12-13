@@ -30,7 +30,7 @@ Var <- runif(500, 0, 10)
 mydata <- data.frame(Var, Sin=sin(Var))
 tr <- mydata[1:25,] # Training
 te <- mydata[26:500,] # Test
-winit = runif(10, -1,1)
+winit = runif(31, -1,1)
 
 nn <- neuralnet(Sin ~ Var, data = tr,
                 hidden = 10, startweights = winit)
@@ -41,6 +41,9 @@ points(te[,1],predict(nn,te), col="red", cex=1)
 
 ```
 The training data fits very well and the predictions seems pretty accurate aswell.
+
+weights: one for each of the 10 hidden nodes, plus one for the bias term for each of the 10 hidden nodes,
+plus one for the output node, plus one for the bias term for the output node
 
 2:
 ```{r, echo=FALSE}
@@ -54,7 +57,7 @@ Var <- runif(500, 0, 10)
 mydata <- data.frame(Var, Sin=sin(Var))
 tr <- mydata[1:25,] # Training
 te <- mydata[26:500,] # Test
-winit = runif(10, -1,1)
+winit = runif(31, -1,1)
 
 # Define custom activation functions
 h1 <- function(x) x
@@ -74,7 +77,7 @@ nn3 <- neuralnet(Sin ~ Var, data = tr,
                 hidden = 10, act.fct = h3, startweights = winit)
 
 # Plot results
-plot(tr, cex=3)
+plot(tr, cex=3, ylim=c(-1.5, 1.5))
 points(te, col = "blue", cex=2)
 points(te[,1],predict(nn1,te), col="red", cex=1)
 points(te[,1],predict(nn2,te), col="green", cex=1)
@@ -94,34 +97,50 @@ mydata <- data.frame(Var, Sin=sin(Var))
 
 # Plot of the training data (black), test data (blue), and predictions (red)
 
-plot(mydata, col = "blue", cex=1)
-points(mydata[,1],predict(nn,mydata), col="red", cex=1)
+prediction = predict(nn,mydata)
+
+plot(mydata, col = "blue", cex=1, ylim=c(-15, 2), xlim=c(0, 55))
+points(mydata[,1],prediction, col="red", cex=1, )
+
+
+smallestIndex = which.min(prediction)
+
+smallestvalue = prediction[smallestIndex]
+
+nn$weights
+
+smallestvalue
+
 
 ```
-The predictions seem to still be accurato to the data just not as large, something might be wrong.
+The predictions seem to still be accurate to the data up to Var 10, and after that it converges to -10.74471 at Var=50
+
+maybe: the predictions appear to converge to -8 because that is the value that the neural network is being trained to predict. The neural network is being trained on the tr data set, which only contains 25 points. These points have a range of values for the Sin variable, but the majority of them are near -8. Therefore, the neural network is likely learning to predict -8 for most inputs.
 
 5:
 
 ```{r, echo=FALSE}
-library(neuralnet)
-set.seed(1234567890)
+# Sample 500 points uniformly at random in the interval [0,10]
 Var <- runif(500, 0, 10)
-Sin=sin(Var)
-mydata <- data.frame( Var,  Sin)
-test_data <- mydata
 
+# Apply the sine function to each point
+mydata <- data.frame(Var, Sin=sin(Var))
+otherWayData <- data.frame(Sin=sin(Var), Var)
 
-nn <- neuralnet(Sin ~ Var, data = test_data,
-                hidden = 10, startweights = winit, threshold = 0.1 )
+winit = runif(31, 0,10)
 
-predictions <- predict(nn, test_data)
+# Use all these points as training points
+tr <- mydata
 
-# Plot the training data, test data, and predictions
-plot(mydata, col = "black", cex=1)
-points(test_data, col = "blue", cex=1)
-points(test_data[,1], predictions, col="red", cex=1)
+# Set the target variable to be Var instead of Sin
+nn <- neuralnet(Var ~ Sin, data = tr, hidden = 10, threshold = 0.1, startweights = winit )
 
+# Plot the predictions of the neural network
+plot(tr, col = "blue", cex=1,ylim=c(-10, 10), xlim=c(0, 10))
+points(tr[,1],predict(nn,tr), col="red", cex=1)
+
+plot(otherWayData,col = "blue", cex=1) #kanske borde plotta engligt gamla training data istället?
+points(otherWayData[,1],predict(nn,otherWayData), col="red", cex=1)
 ```
-ska få dåliga resultat, ser gjävlig bra ut nu något är fel!!
-
+Looks very bad, it is reasonable because i am trying to map from multiple values and not a clear function. 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
