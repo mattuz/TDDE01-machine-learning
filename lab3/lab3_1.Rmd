@@ -14,13 +14,18 @@ set.seed(1234567890)
 library(geosphere)
 stations <- read.csv("stations.csv")
 temps <- read.csv("temps50k.csv")
-st <- merge(stations,temps,by="station_number")
-h_distance <- # These three values are up to the students (dessa är h från föreläsningarna, dvs smoothing)
-h_date <-
-h_time <-
+
+date <- as.Date("2013-11-04") # The date to predict (up to the students)
+filtered_temps <- temps[temps$date < as.Date(date),] #Filter the tempratures to discard irrelevant dates.
+
+st <- merge(stations,filtered_temps,by="station_number")
+h_distance <- 20000# These three values are up to the students (dessa är h från föreläsningarna, dvs smoothing)
+h_date <- 1
+h_time <- .5
 a <- 58.4274 # The point to predict (up to the students) #latitud
 b <- 14.826 #longitud
-date <- "2013-11-04" # The date to predict (up to the students)
+pos_vec <- cbind(b,a)
+
 times <- c("04:00:00", "06:00:00", "08:00:00",
            "10:00:00","12:00:00","14:00:00",
            "16:00:00","18:00:00","20:00:00",
@@ -28,8 +33,61 @@ times <- c("04:00:00", "06:00:00", "08:00:00",
 temp <- vector(length=length(times))
 
 # Students’ code here
+#physical distance with distHaversine
+st_loc<-cbind(st$longitude,st$latitude)
+dist_hav<-distHaversine(p1=pos_vec,p2=st_loc)
+m<-cbind(dist_hav)
 
-plot(temp, type="o")
+#Gaussian Kernel
+#(x_* - x_i)/h from lectures
+#diff represents (x_* - x_i)
+gaussian_kernel<-function(diff, h_val) {
+  
+  u <- diff/h_val
+  return(exp(-u*u))
+}
+
+
+
+relative_day_dist <- function(d1,d2){
+  diff<- as.Date(d1) - as.Date(d2)
+  return (as.numeric(diff))
+}
+
+relative_hour_dist <- function(time1, time2) {
+  time_obj1 <-strptime(time1,format="%H:%M:%S")
+  time_obj2 <-strptime(time2,format="%H:%M:%S")
+  h1<-as.integer(format(time_obj1,"%H"))
+  h2<-as.integer(format(time_obj2,"%H"))
+  # Convert hours to minutes
+  minute1 <- h1 * 60
+  minute2 <- h2 * 60
+
+  # Compute the absolute difference in minutes
+  minute_diff <- abs(minute1 - minute2)
+
+  # Compute the relative distance in hours
+  hour_diff <- minute_diff / 60
+
+  return(hour_diff)
+}
+
+#Calculations
+
+k_distance <- gaussian_kernel(dist_hav,h_distance)
+k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date)
+
+
+for (i in 1:length(temp)) {
+  k_time <- gaussian_kernel(relative_hour_dist(times[i],filtered_temps$time),h_time)
+}
+
+plot(k_time)
+#plot(dist_hav,k_distance)
+#plot(k_days)
+
+#plot(temp, type="o")
+
 
 ```
 
