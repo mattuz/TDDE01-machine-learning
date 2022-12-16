@@ -74,7 +74,7 @@ for(i in 1:10){ # We produce predictions for just the first 10 points in the dat
     
     n <- unlist(spam[i,-58])
     
-    # Compute the RBF kernel value using the formula
+    # Compute the RBF kernel value using the formul
     s <- exp(-gamma * sum((n - k2)^2))
     k<-c(k, s)
     
