@@ -9,6 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+Setup
 ```{r}
 set.seed(1234567890)
 library(geosphere)
@@ -19,9 +20,10 @@ date <- as.Date("2013-11-04") # The date to predict (up to the students)
 filtered_temps <- temps[temps$date < as.Date(date),] #Filter the tempratures to discard irrelevant dates.
 
 st <- merge(stations,filtered_temps,by="station_number")
-h_distance <- 20000# These three values are up to the students (dessa är h från föreläsningarna, dvs smoothing)
-h_date <- 1
-h_time <- .5
+# These three values are up to the students 
+h_distance <- 40000 #Unsure how much we want to consider stations further away. 
+h_date <- 9
+h_time <- 3
 a <- 58.4274 # The point to predict (up to the students) #latitud
 b <- 14.826 #longitud
 pos_vec <- cbind(b,a)
@@ -30,7 +32,17 @@ times <- c("04:00:00", "06:00:00", "08:00:00",
            "10:00:00","12:00:00","14:00:00",
            "16:00:00","18:00:00","20:00:00",
            "22:00:00", "24:00:00")
+times_numbers <-c(4,6,8,10,12,14,16,18,20,22,24) #for the plot
 temp <- vector(length=length(times))
+
+
+
+
+```
+
+
+Calculations for relative distances in location, date (day) and time (hours). 
+```{r}
 
 # Students’ code here
 #physical distance with distHaversine
@@ -48,16 +60,15 @@ gaussian_kernel<-function(diff, h_val) {
 }
 
 
-
 relative_day_dist <- function(d1,d2){
-  diff<- as.Date(d1) - as.Date(d2)
+  diff<- as.Date(d1) - as.Date(d2) #Difference between our date and the date we're comparing (in days).
   return (as.numeric(diff))
 }
 
 relative_hour_dist <- function(time1, time2) {
-  time_obj1 <-strptime(time1,format="%H:%M:%S")
+  time_obj1 <-strptime(time1,format="%H:%M:%S") #Create time object so that we can extract hour
   time_obj2 <-strptime(time2,format="%H:%M:%S")
-  h1<-as.integer(format(time_obj1,"%H"))
+  h1<-as.integer(format(time_obj1,"%H")) #take the hour value as an integer
   h2<-as.integer(format(time_obj2,"%H"))
   # Convert hours to minutes
   minute1 <- h1 * 60
@@ -72,22 +83,72 @@ relative_hour_dist <- function(time1, time2) {
   return(hour_diff)
 }
 
-#Calculations
+```
 
+
+
+Calculations with sum of kernels. 
+```{r}
+
+#Calculations
+predictions = rep(0,11)
 k_distance <- gaussian_kernel(dist_hav,h_distance)
 k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date)
 
 
 for (i in 1:length(temp)) {
+  rel_h<-relative_hour_dist(times[i],filtered_temps$time)
   k_time <- gaussian_kernel(relative_hour_dist(times[i],filtered_temps$time),h_time)
+  k_sum <- cbind(k_distance + k_days + k_time)
+  k_sum <- (k_sum/sum(k_sum)) # Normalize the values in the k_sum matrix by dividing each element by the sum of the elements in each row
+  weighted_temps <- k_sum * filtered_temps$air_temperature #get weighted temperatures
+  
+  predictions[i] <- sum(weighted_temps)
+
+  
 }
+plot(times_numbers,predictions,type="o",xlab = "Time of day (hours)",ylab = "Predicted temp",main = "Prediction of temperature using sum")
 
-plot(k_time)
-#plot(dist_hav,k_distance)
-#plot(k_days)
 
-#plot(temp, type="o")
+#Used to look at h values
+#plot(rel_h,k_time)
+#plot(dist_hav,k_distance,xlim=c(0,100000))
+#plot(relative_day_dist(date,filtered_temps$date),k_days,xlim=c(0,100))
+
 
 
 ```
+These values look very reasonable. Looking at the curve going from colder at the earlier and later hours, while having higher temperatures at the middle of the day. November of 2013 was a very cold month in general, so having a prediction of +6 C is not unreasonable. 
+
+
+```{r}
+predictions2 = rep(0,11)
+k_distance <- gaussian_kernel(dist_hav,h_distance)
+k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date)
+
+
+
+for (i in 1:length(temp)) {
+  rel_h<-relative_hour_dist(times[i],filtered_temps$time)
+  k_time <- gaussian_kernel(relative_hour_dist(times[i],filtered_temps$time),h_time)
+  k_sum <- cbind(k_distance * k_days * k_time)
+  k_sum <- (k_sum/sum(k_sum)) # Normalize the values in the k_sum matrix by dividing each element by the sum of the elements in each row
+  weighted_temps <- k_sum * filtered_temps$air_temperature #get weighted temperatures
+  
+  predictions2[i] <- sum(weighted_temps)
+
+  
+}
+plot(times_numbers,predictions2,type="o",xlab = "Time of day (hours)",ylab = "Predicted temp",main = "Prediction of temperature using mult")
+
+
+
+```
+This graph looks a bit more unclear. It's difficult to interpret if there's something wrong with how the data has been divided when multiplying, since the curve is not distributed like a bell curve. 
+
+The reason for this graph being less "well distributed" is because the multiplied kernels will give more weight to the higher elements in the kernels, while suppressing the lower ones. This means that values that are not very close to the points we're looking at will not be considered nearly as much (even if they're already not being considered much). 
+
+The summed kernel graph gives equal weights to all values which will give our predictions more "real" data to use, since values a bit further away from our initial ones will still be considered. In this case these values are very relevant, since weather predictions (more specifically, temperature predictions) require a lot of data, which should be distributed over time (and not only looking at the exact same day/time/location as what we're trying to predict). 
+
+
 
