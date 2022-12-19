@@ -30,7 +30,8 @@ Var <- runif(500, 0, 10)
 mydata <- data.frame(Var, Sin=sin(Var))
 tr <- mydata[1:25,] # Training
 te <- mydata[26:500,] # Test
-winit = runif(31, -1,1)
+winit = runif(31, -1,1) #weights: one for each of the 10 hidden nodes, plus one for the bias term for each of the 10 hidden nodes,
+                        #plus one for the output node, plus one for the bias term for the output node
 
 nn <- neuralnet(Sin ~ Var, data = tr,
                 hidden = 10, startweights = winit)
@@ -40,10 +41,17 @@ points(te, col = "blue", cex=1)
 points(te[,1],predict(nn,te), col="red", cex=1)
 
 ```
-The training data fits very well and the predictions seems pretty accurate aswell.
+Question: 
+Train a neural network to learn the trigonometric sine function. To do so, sample 500
+points uniformly at random in the interval [0,10]. Apply the sine function to each point.
+The resulting value pairs are the data points available to you. Use 25 of the 500 points
+for training and the rest for test. Use one hidden layer with 10 hidden units. You do
+not need to apply early stopping. Plot the training and test data, and the predictions of
+the learned NN on the test data. You should get good results. Comment your results.
 
-weights: one for each of the 10 hidden nodes, plus one for the bias term for each of the 10 hidden nodes,
-plus one for the output node, plus one for the bias term for the output node
+Answer:
+The predictions seems pretty accurate.
+
 
 2:
 ```{r, echo=FALSE}
@@ -84,6 +92,14 @@ points(te[,1],predict(nn2,te), col="green", cex=1)
 points(te[,1],predict(nn3,te), col="pink", cex=1)
 
 ```
+Question:
+ In question (1), you used the default logistic (a.k.a. sigmoid) activation function, i.e.
+act.fct = "logistic". Repeat question (1) with the following custom activation
+functions: h1(x) = x, h2(x) = max{0, x} and h3(x) = ln(1 + exp x) (a.k.a. linear, ReLU
+and softplus). See the help file of the neuralnet package to learn how to use custom
+activation functions. Plot and comment your results.
+
+Answer:
 The third custom activation seems to fit the best.
 
 3:
@@ -113,9 +129,23 @@ smallestvalue
 
 
 ```
-The predictions seem to still be accurate to the data up to Var 10, and after that it converges to -10.74471 at Var=50
+Question:
+Sample 500 points uniformly at random in the interval [0,50], and apply the sine function to each point. Use the NN learned in question (1) to predict the sine function value
+for these new 500 points. You should get mixed results. Plot and comment your results.
 
-maybe: the predictions appear to converge to -8 because that is the value that the neural network is being trained to predict. The neural network is being trained on the tr data set, which only contains 25 points. These points have a range of values for the Sin variable, but the majority of them are near -8. Therefore, the neural network is likely learning to predict -8 for most inputs.
+Answer:
+The predictions seem to still be accurate to the data up to Var 10.
+
+
+4:
+
+Question:
+ In question (3), the predictions seem to converge to some value. Explain why this
+happens. To answer this question, you may need to get access to the weights of the
+NN learned. You can do it by running nn or nn$weights where nn is the NN learned.
+
+Answer:
+The predictions seem to still be accurate to the data up to Var 10, and after that it converges to -10.74471 at Var=50.
 
 5:
 
@@ -142,5 +172,14 @@ points(tr[,1],predict(nn,tr), col="red", cex=1)
 plot(otherWayData,col = "blue", cex=1) #kanske borde plotta engligt gamla training data istället?
 points(otherWayData[,1],predict(nn,otherWayData), col="red", cex=1)
 ```
+Question:
+ Sample 500 points uniformly at random in the interval [0,10], and apply the sine function to each point. Use all these points as training points for learning a NN that tries
+to predict x from sin(x), i.e. unlike before when the goal was to predict sin(x) from
+x. Use the learned NN to predict the training data. You should get bad results. Plot
+and comment your results. Help: Some people get a convergence error in this question. It can be solved by stopping the training before reaching convergence by setting
+threshold = 0.1.
+
+
+Answer:
 Looks very bad, it is reasonable because i am trying to map from multiple values and not a clear function. 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
