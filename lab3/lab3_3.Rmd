@@ -20,7 +20,7 @@ summary(cars)
 
 ## Including Plots
 
-You can also embed plots, for example:
+You can also embed plots, for example :
 
 1:
 ```{r, echo=FALSE}
