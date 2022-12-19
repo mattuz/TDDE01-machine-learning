@@ -20,7 +20,7 @@ summary(cars)
 
 ## Including Plots
 
-You can also embed plots, for example:
+You can also embed plots, for example :
 
 1:
 ```{r, echo=FALSE}
@@ -50,7 +50,8 @@ not need to apply early stopping. Plot the training and test data, and the predi
 the learned NN on the test data. You should get good results. Comment your results.
 
 Answer:
-The predictions seems pretty accurate.
+The predictions seems pretty accurate. We can se that there is less training data around the points where it kind of diverges from the testdata.
+this is reasonoble and it then finds its way back.
 
 
 2:
@@ -90,6 +91,8 @@ points(te, col = "blue", cex=2)
 points(te[,1],predict(nn1,te), col="red", cex=1)
 points(te[,1],predict(nn2,te), col="green", cex=1)
 points(te[,1],predict(nn3,te), col="pink", cex=1)
+legend(1, -0.5, legend=c("train", "test","linear", "ReLu", "Softplus"),
+       col=c("black","blue","red", "green", "pink"), lty=1:2, cex=0.8)
 
 ```
 Question:
@@ -100,7 +103,8 @@ and softplus). See the help file of the neuralnet package to learn how to use cu
 activation functions. Plot and comment your results.
 
 Answer:
-The third custom activation seems to fit the best.
+The third custom activation softplus seems to fit the best. while the first, linear is very bad and the second, ReLu manages
+predict some values.
 
 3:
 
@@ -123,7 +127,9 @@ smallestIndex = which.min(prediction)
 
 smallestvalue = prediction[smallestIndex]
 
-nn$weights
+weights = nn$weights
+
+weights
 
 smallestvalue
 
@@ -134,7 +140,7 @@ Sample 500 points uniformly at random in the interval [0,50], and apply the sine
 for these new 500 points. You should get mixed results. Plot and comment your results.
 
 Answer:
-The predictions seem to still be accurate to the data up to Var 10.
+The predictions seem to still be accurate to the data up to Var 10, and after that it converges to -10.74471 up to Var=50.
 
 
 4:
@@ -146,6 +152,9 @@ NN learned. You can do it by running nn or nn$weights where nn is the NN learned
 
 Answer:
 The predictions seem to still be accurate to the data up to Var 10, and after that it converges to -10.74471 at Var=50.
+The nn is only trained of var values between 0-10 but attempts to predict 0-50. Same for the hidden units.
+Not sure why it converges to exactly -10.74.
+
 
 5:
 
@@ -160,16 +169,15 @@ otherWayData <- data.frame(Sin=sin(Var), Var)
 winit = runif(31, 0,10)
 
 # Use all these points as training points
-tr <- mydata
 
 # Set the target variable to be Var instead of Sin
-nn <- neuralnet(Var ~ Sin, data = tr, hidden = 10, threshold = 0.1, startweights = winit )
+nn <- neuralnet(Var ~ Sin, data = mydata, hidden = 10, threshold = 0.1, startweights = winit )
 
 # Plot the predictions of the neural network
-plot(tr, col = "blue", cex=1,ylim=c(-10, 10), xlim=c(0, 10))
+plot(te, col = "blue", cex=1,ylim=c(-10, 10), xlim=c(0, 10))
 points(tr[,1],predict(nn,tr), col="red", cex=1)
 
-plot(otherWayData,col = "blue", cex=1) #kanske borde plotta engligt gamla training data istället?
+plot(otherWayData,col = "blue", cex=1) #kanske borde plotta enligt gamla training data istället?
 points(otherWayData[,1],predict(nn,otherWayData), col="red", cex=1)
 ```
 Question:
@@ -181,5 +189,6 @@ threshold = 0.1.
 
 
 Answer:
-Looks very bad, it is reasonable because i am trying to map from multiple values and not a clear function. 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Looks very bad, it is reasonable because we are trying to map from multiple values and not a clear function. 
+One sin value corresponds to multiple var values which makes it impossible to predict.
+It kinda finds an avarage. 
