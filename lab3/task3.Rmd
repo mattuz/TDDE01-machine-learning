@@ -1,0 +1,129 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Task 1
+
+1).
+
+```{r}
+
+library(neuralnet)
+set.seed(1234567890)
+Var <- runif(500, 0, 10)
+mydata <- data.frame(Var, Sin=sin(Var))
+
+tr <- mydata[1:25,] # Trainig
+te <- mydata[26:500,] # Test
+
+# Random initialization of the weights in the interval [-1, 1]
+winit <- runif(25, -1, 1)
+nn <- neuralnet(Sin ~ Var, data = tr, startweights = winit, hidden = 10)
+# Plot of the training data (black), test data (blue), and predictions (red)
+
+plot(tr, cex=2)
+points(te, col = "blue", cex=1)
+points(te[,1],predict(nn,te), col="red", cex=1)
+
+
+```
+2)
+
+```{r}
+# Define the custom activation function
+# Linear activation function
+linear = function(x) {
+  x
+}
+
+# ReLU (Rectified Linear Unit) activation function
+relu = function(x) {ifelse(x>0, x, 0)}
+
+
+# Softplus activation function
+softplus = function(x) {
+  log(1 + exp(x))
+}
+
+
+# Train a neural network with the custom activation function
+nn1 <- neuralnet(Sin ~ Var, data = tr, hidden = 10, act.fct = linear)
+
+nn2 <- neuralnet(Sin ~ Var, data = tr, hidden = 10, act.fct = relu)
+
+nn3 <- neuralnet(Sin ~ Var, data = tr, hidden = 10, act.fct = softplus)
+
+
+plot(tr, cex=2)
+points(te, col = "blue", cex=1)
+points(te[,1],predict(nn1,te), col="red", cex=1)
+
+plot(tr, cex=2)
+points(te, col = "blue", cex=1)
+points(te[,1],predict(nn2,te), col="red", cex=1)
+
+plot(tr, cex=2)
+points(te, col = "blue", cex=1)
+points(te[,1],predict(nn3,te), col="red", cex=1)
+
+
+```
+
+```{r}
+
+# Generate 500 random points in the interval [0, 50]
+Var = runif(500, 0, 50)
+
+# Apply the sine function to each point
+large_data <- data.frame(Var, Sin=sin(Var))
+
+plot(large_data, cex=2)
+points(large_data[,1],predict(nn,large_data), col="red", cex=1)
+
+```
+
+Task 4
+```{r}
+
+```
+
+Task 5
+
+```{r}
+
+Var = runif(500, 0, 10)
+
+# Apply the sine function to each point
+train <- data.frame(Sin=sin(Var), Var)
+
+nn5 <- neuralnet(Sin ~ Var, data = train,threshold = 0.01, startweights = winit, hidden = 10)
+
+plot(train, cex=2)
+points(train[,],predict(nn5,train), col="red", cex=1)
+
+```
+
+```{r}
+points = runif(500, 0, 10)
+
+# Apply the sine function to each point
+sine_values = sin(points)
+data = data.frame(Sin = sine_values, Var = points)
+
+# Train the neural network
+nn5 = neuralnet(Var ~ Sin, data = data, threshold = 0.01, startweights = winit, hidden = 10)
+
+predictions <- compute(x = nn5, covariate = data)
+
+plot(data, col = "red" )
+lines(predictions$net.result, col = "green")
+```
+
+
+
+
