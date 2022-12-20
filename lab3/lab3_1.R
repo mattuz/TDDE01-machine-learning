@@ -1,23 +1,15 @@
----
-title: "lab3"
-output: html_document
-date: "2022-12-08"
----
-
-```{r setup, include=FALSE}
+## ----setup, include=FALSE-------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
-```
-Task 1
 
-Setup
-```{r, warning=FALSE, echo=FALSE}
+
+## ---- warning=FALSE, echo=FALSE-------------------------------------------------
 set.seed(1234567890)
 library(geosphere)
 stations <- read.csv("stations.csv")
 temps <- read.csv("temps50k.csv")
 
 date <- as.Date("2013-11-04") # The date to predict (up to the students)
-filtered_temps <- temps[temps$date < as.Date(date),] #Filter the tempratures to discard irrelevant dates.No time traverller.
+filtered_temps <- temps[temps$date < as.Date(date),] #Filter the tempratures to discard irrelevant dates.
 
 st <- merge(stations,filtered_temps,by="station_number")
 # These three values are up to the students 
@@ -33,24 +25,19 @@ times <- c("04:00:00", "06:00:00", "08:00:00",
            "16:00:00","18:00:00","20:00:00",
            "22:00:00", "24:00:00")
 times_numbers <-c(4,6,8,10,12,14,16,18,20,22,24) #for the plot
-temp <- vector(length=length(times)) # length for times: used in forloop.
+temp <- vector(length=length(times))
 
 
 
 
-```
 
- 
 
-```{r, warning=FALSE, echo=FALSE}
+## ---- warning=FALSE, echo=FALSE-------------------------------------------------
 
-#Calculations for relative distances in location, date (day) and time (hours).
 # Students’ code here
-
-
 #physical distance with distHaversine
 st_loc<-cbind(st$longitude,st$latitude)
-dist_hav<-distHaversine(p1=pos_vec,p2=st_loc) #Compare our pos with all the other pos
+dist_hav<-distHaversine(p1=pos_vec,p2=st_loc)
 m<-cbind(dist_hav)
 
 #Gaussian Kernel
@@ -86,13 +73,9 @@ relative_hour_dist <- function(time1, time2) {
   return(hour_diff)
 }
 
-```
 
 
-
-Calculations with sum of kernels. 
-
-```{r, warning=FALSE, echo=FALSE}
+## ---- warning=FALSE, echo=FALSE-------------------------------------------------
 
 #Calculations
 predictions = rep(0,11)
@@ -100,8 +83,6 @@ k_distance <- gaussian_kernel(dist_hav,h_distance)
 k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date)
 
 
-
-#Different times in a day.
 for (i in 1:length(temp)) {
   rel_h<-relative_hour_dist(times[i],filtered_temps$time)
   k_time <- gaussian_kernel(relative_hour_dist(times[i],filtered_temps$time),h_time)
@@ -110,6 +91,8 @@ for (i in 1:length(temp)) {
   weighted_temps <- k_sum * filtered_temps$air_temperature #get weighted temperatures
   
   predictions[i] <- sum(weighted_temps)
+
+  
 }
 plot(times_numbers,predictions,type="o",xlab = "Time of day (hours)",ylab = "Predicted temp",main = "Prediction of temperature using sum")
 
@@ -121,11 +104,9 @@ plot(times_numbers,predictions,type="o",xlab = "Time of day (hours)",ylab = "Pre
 
 
 
-```
-These values look very reasonable. Looking at the curve going from colder at the earlier and later hours, while having higher temperatures at the middle of the day. November of 2013 was a very cold month in general, so having a prediction of +6 C is not unreasonable. 
 
 
-```{r, warning=FALSE, echo=FALSE}
+## ---- warning=FALSE, echo=FALSE-------------------------------------------------
 predictions2 = rep(0,11)
 k_distance <- gaussian_kernel(dist_hav,h_distance)
 k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date)
@@ -147,17 +128,9 @@ plot(times_numbers,predictions2,type="o",xlab = "Time of day (hours)",ylab = "Pr
 
 
 
-```
-This graph looks a bit more unclear. It's difficult to interpret if there's something wrong with how the data has been divided when multiplying, since the curve is not distributed like a bell curve. 
 
-The reason for this graph being less "well distributed" is because the multiplied kernels will give more weight to the higher elements in the kernels, while suppressing the lower ones. This means that values that are not very close to the points we're looking at will not be considered nearly as much (even if they're already not being considered much). 
 
-The summed kernel graph gives equal weights to all values which will give our predictions more "real" data to use, since values a bit further away from our initial ones will still be considered. In this case these values are very relevant, since weather predictions (more specifically, temperature predictions) require a lot of data, which should be distributed over time (and not only looking at the exact same day/time/location as what we're trying to predict). 
-
-Task 2
-
-Error estimates:
-```{r, warning=FALSE, echo=FALSE}
+## ---- warning=FALSE, echo=FALSE-------------------------------------------------
 
 
 library(kernlab)
@@ -211,22 +184,9 @@ err3 <- (t[1,2]+t[2,1])/sum(t)
 print("Error 3")
 err3
 
-```
-
-# Questions
-
-# 1. Which filter do we return to the user ? filter0, filter1, filter2 or filter3? Why?
-
-The filter we return is filter1. Because the SVM model is trained on trianing data (tr) and validated on validation data (va). Then we should use the optimal err_va to make prediction on the test data. Using ksvm on training data and not any other. In general you do your training on your training set, evalutate its performance on the validation set, and then use the best model to predict on the test dataset. 
-
-# 2. What is the estimate of the generalization error of the filter returned to the user? err0, err1, err2 or err3? Why?
-
-it is err1 = 0.08489388. Filter0 gives low error estimate due to the fact that it is filtered on validation, the same way we choose the optimal err_va. Filter3 gives the lowest error estimate because of the the model is trained on the same data it is predicted on. As for filter1 and filter2, they give similar error estimates. Filter2 error rate is slightly lower due to the fact that it is trained on a larger data set (training and validation), where filter1 is only trained on training data.
-
-# 3. Implementation of SVM predictions.
 
 
-```{r, echo=FALSE}
+## ---- echo=FALSE----------------------------------------------------------------
 # Get the indices of the support vectors in the SVM classifier
 sv <- alphaindex(filter3)[[1]]
 
@@ -271,17 +231,9 @@ prediction = predict(filter3, spam[1:10, -58], type = "decision")
 plot(k, col = "red")
 lines(prediction)
 
-```
-The red dotted points is the predicted values that generated from the linear combination for filter3. The lines is the predictions from the predict function.
 
-Task 3
 
-## Including Plots
-
-You can also embed plots, for example :
-
-1:
-```{r, echo=FALSE, warning=FALSE}
+## ---- echo=FALSE----------------------------------------------------------------
 library(neuralnet)
 set.seed(1234567890)
 Var <- runif(500, 0, 10)
@@ -298,22 +250,9 @@ plot(tr, cex=2)
 points(te, col = "blue", cex=1)
 points(te[,1],predict(nn,te), col="red", cex=1)
 
-```
-Question: 
-Train a neural network to learn the trigonometric sine function. To do so, sample 500
-points uniformly at random in the interval [0,10]. Apply the sine function to each point.
-The resulting value pairs are the data points available to you. Use 25 of the 500 points
-for training and the rest for test. Use one hidden layer with 10 hidden units. You do
-not need to apply early stopping. Plot the training and test data, and the predictions of
-the learned NN on the test data. You should get good results. Comment your results.
-
-Answer:
-The predictions seems pretty accurate. We can se that there is less training data around the points where it kind of diverges from the testdata.
-this is reasonoble and it then finds its way back.
 
 
-2:
-```{r, echo=FALSE}
+## ---- echo=FALSE----------------------------------------------------------------
 library(neuralnet)
 
 # Set seed for reproducibility
@@ -352,21 +291,9 @@ points(te[,1],predict(nn3,te), col="pink", cex=1)
 legend(1, -0.5, legend=c("train", "test","linear", "ReLu", "Softplus"),
        col=c("black","blue","red", "green", "pink"), lty=1:2, cex=0.8)
 
-```
-Question:
- In question (1), you used the default logistic (a.k.a. sigmoid) activation function, i.e.
-act.fct = "logistic". Repeat question (1) with the following custom activation
-functions: h1(x) = x, h2(x) = max{0, x} and h3(x) = ln(1 + exp x) (a.k.a. linear, ReLU
-and softplus). See the help file of the neuralnet package to learn how to use custom
-activation functions. Plot and comment your results.
 
-Answer:
-The third custom activation softplus seems to fit the best. while the first, linear is very bad and the second, ReLu manages
-predict some values.
 
-3:
-
-```{r, echo=FALSE}
+## ---- echo=FALSE----------------------------------------------------------------
 library(neuralnet)
 set.seed(1234567890)
 Var <- runif(500, 0, 50)
@@ -392,31 +319,9 @@ weights
 smallestvalue
 
 
-```
-Question:
-Sample 500 points uniformly at random in the interval [0,50], and apply the sine function to each point. Use the NN learned in question (1) to predict the sine function value
-for these new 500 points. You should get mixed results. Plot and comment your results.
-
-Answer:
-The predictions seem to still be accurate to the data up to Var 10, and after that it converges to -10.74471 up to Var=50.
 
 
-4:
-
-Question:
- In question (3), the predictions seem to converge to some value. Explain why this
-happens. To answer this question, you may need to get access to the weights of the
-NN learned. You can do it by running nn or nn$weights where nn is the NN learned.
-
-Answer:
-The predictions seem to still be accurate to the data up to Var 10, and after that it converges to -10.74471 at Var=50.
-The nn is only trained of var values between 0-10 but attempts to predict 0-50. Same for the hidden units.
-Not sure why it converges to exactly -10.74.
-
-
-5:
-
-```{r, echo=FALSE}
+## ---- echo=FALSE----------------------------------------------------------------
 # Sample 500 points uniformly at random in the interval [0,10]
 Var <- runif(500, 0, 10)
 
@@ -437,20 +342,4 @@ points(tr[,1],predict(nn,tr), col="red", cex=1)
 
 plot(otherWayData,col = "blue", cex=1) #kanske borde plotta enligt gamla training data istället?
 points(otherWayData[,1],predict(nn,otherWayData), col="red", cex=1)
-```
-Question:
- Sample 500 points uniformly at random in the interval [0,10], and apply the sine function to each point. Use all these points as training points for learning a NN that tries
-to predict x from sin(x), i.e. unlike before when the goal was to predict sin(x) from
-x. Use the learned NN to predict the training data. You should get bad results. Plot
-and comment your results. Help: Some people get a convergence error in this question. It can be solved by stopping the training before reaching convergence by setting
-threshold = 0.1.
-
-
-Answer:
-Looks very bad, it is reasonable because we are trying to map from multiple values and not a clear function. 
-One sin value corresponds to multiple var values which makes it impossible to predict.
-It kinda finds an avarage. 
-
-
-
 
