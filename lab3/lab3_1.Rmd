@@ -159,59 +159,87 @@ Task 2
 Error estimates:
 ```{r, warning=FALSE, echo=FALSE}
 
-
+# Load the kernlab library
 library(kernlab)
+
+# Set seed for reproducibility
 set.seed(1234567890)
 
+# Load the spam data set
 data(spam)
+
+# Shuffle the rows of the data set
 foo <- sample(nrow(spam))
 spam <- spam[foo,]
-spam[,-58]<-scale(spam[,-58])
+
+# Scale the features (except for the target column)
+spam[,-58] <- scale(spam[,-58])
+
+# Split the data into training, validation, and test sets
 tr <- spam[1:3000, ]
 va <- spam[3001:3800, ]
 trva <- spam[1:3800, ]
 te <- spam[3801:4601, ] 
 
+# Set the step size for the loop
 by <- 0.3
+
+# Initialize a vector to store the validation errors
 err_va <- NULL
+
+# Loop over different values of the regularization parameter C
 for(i in seq(by,5,by)){
-  filter <- ksvm(type~.,data=tr,kernel="rbfdot",kpar=list(sigma=0.05),C=i,scaled=FALSE)
-  mailtype <- predict(filter,va[,-58])
-  t <- table(mailtype,va[,58])
-  err_va <-c(err_va,(t[1,2]+t[2,1])/sum(t))
+  # Train a SVM classifier with the RBF kernel and the current value of C
+  filter <- ksvm(type~., data=tr, kernel="rbfdot", kpar=list(sigma=0.05), C=i, scaled=FALSE)
+  
+  # Make predictions on the validation set
+  mailtype <- predict(filter, va[,-58])
+  
+  # Calculate the error on the validation set
+  t <- table(mailtype, va[,58])
+  err_va <- c(err_va, (t[1,2]+t[2,1])/sum(t))
 }
 
-filter0 <- ksvm(type~.,data=tr,kernel="rbfdot",kpar=list(sigma=0.05),C=which.min(err_va)*by,scaled=FALSE)
-mailtype <- predict(filter0,va[,-58])
-t <- table(mailtype,va[,58])
+# Find the value of C that achieved the lowest validation error
+best_C <- which.min(err_va) * by
+
+# Retrain the classifier with the optimal value of C
+filter0 <- ksvm(type~., data=tr, kernel="rbfdot", kpar=list(sigma=0.05), C=best_C, scaled=FALSE)
+
+# Evaluate the error on the validation set
+mailtype <- predict(filter0, va[,-58])
+t <- table(mailtype, va[,58])
 err0 <- (t[1,2]+t[2,1])/sum(t)
 print("Error 0")
 err0
 
-filter1 <- ksvm(type~.,data=tr,kernel="rbfdot",kpar=list(sigma=0.05),C=which.min(err_va)*by,scaled=FALSE)
-mailtype <- predict(filter1,te[,-58])
-t <- table(mailtype,te[,58])
+# Retrain the classifier on the training set and evaluate the error on the test set
+filter1 <- ksvm(type~., data=tr, kernel="rbfdot", kpar=list(sigma=0.05), C=best_C, scaled=FALSE)
+mailtype <- predict(filter1, te[,-58])
+t <- table(mailtype, te[,58])
 err1 <- (t[1,2]+t[2,1])/sum(t)
 print("Error 1")
-
 err1
 
-filter2 <- ksvm(type~.,data=trva,kernel="rbfdot",kpar=list(sigma=0.05),C=which.min(err_va)*by,scaled=FALSE)
-mailtype <- predict(filter2,te[,-58])
-t <- table(mailtype,te[,58])
+# Retrain the classifier on the combined training and validation sets and evaluate the error on the test set
+filter2 <- ksvm(type~., data=trva, kernel="rbfdot", kpar=list(sigma=0.05), C=best_C, scaled=FALSE)
+mailtype <- predict(filter2, te[,-58])
+t <- table(mailtype, te[,58])
 err2 <- (t[1,2]+t[2,1])/sum(t)
 print("Error 2")
 err2
 
-filter3 <- ksvm(type~.,data=spam,kernel="rbfdot",kpar=list(sigma=0.05),C=which.min(err_va)*by,scaled=FALSE)
-mailtype <- predict(filter3,te[,-58])
-t <- table(mailtype,te[,58])
+# Retrain the classifier on the entire data set and evaluate the error on the test set
+filter3 <- ksvm(type~., data=spam, kernel="rbfdot", kpar=list(sigma=0.05), C=best_C, scaled=FALSE)
+mailtype <- predict(filter3, te[,-58])
+t <- table(mailtype, te[,58])
 err3 <- (t[1,2]+t[2,1])/sum(t)
 
 print("Error 3")
 err3
 
 ```
+
 
 # Questions
 
