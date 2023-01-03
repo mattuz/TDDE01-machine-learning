@@ -159,7 +159,9 @@ missclass_valid
 
 #How does the model complexity change when K increases and how does it affect the training and validation errors?
 
-#The model complexity seems to increase as k increases, given that the missclass error increases as well. 
+#The model complexity remains the same as k increases, since it's not learning more parameters or features as k increases.
+#One can argue that the overall complexity is increased since there are more data points added, but this does not mean that the complexity of the model
+#is higher. 
 #The best K values are the ones with the lowest missclass error, in this case k=3 and k=4 are the best values. 
 
 #We can see that train gives the lowest missclass error because it is the date we made the model from.
@@ -199,6 +201,8 @@ for (i in 1:30){
     bool_train <- (which(cross_train, useNames = T))
     prob_train <- k_train$prob[cross_train, as.character(j)] + 1e-15
     
+    #val_miss_error[i] <- val_miss_error[i] + sum(-(bool_val*log(prob_val)))
+    #train_miss_error[i] <- train_miss_error[i] + sum(-(bool_train*log(prob_train)))
     
     val_miss_error[i] <- cross.entropy(bool_val, prob_val)
     train_miss_error[i] <- cross.entropy(bool_train, prob_train)
@@ -225,6 +229,7 @@ Assigment 2
 
 
 ```{r, echo=F}
+library(caret)
 parkin = read.csv("parkinsons.csv", header = T)
 parkin_corr <- data.frame(parkin[c(5,7:22)]) #Remove unused voice characteristics
 parkin_scaled <- as.data.frame(scale(parkin_corr))
@@ -233,22 +238,36 @@ n = dim(parkin_corr)[1]
 set.seed(12345)
 
 id=sample(1:n, floor(n*0.6))
-train=parkin_scaled[id,]
-test=parkin_scaled[-id,]
+
+train_pre=parkin_corr[id,]
+test_pre=parkin_corr[-id,]
+
+data_scaler<-preProcess(train_pre)
+train<-predict(data_scaler,train_pre)
+test<-predict(data_scaler,test_pre)
 ```
 Excercise 2
 
 ```{r, echo=T}
-fit = lm(motor_UPDRS ~ ., data = train)
+fit = lm(motor_UPDRS ~ .-1, data = train)
 sum = summary(fit)
-mean(sum$residuals^2)
+MSE_train<-mean(sum$residuals^2)
+pred_test<-predict(fit,test)
+MSE_test<-mean((test$motor_UPDRS-pred_test)^2)
+print(MSE_train)
+print(MSE_test)
 print(sum)
 
 
 ```
 
-#The variables p-values that are higher than 0.05 does not contribute at all.
-#The values that contribute significantly are the ones with high p-values and high estimates. Jitter.DDP is one example of a value that will contribute significantly to the model. 
+#The variables p-values that are higher than 0.05 does not contribute at all (insignificant P-values).
+#The values that contribute significantly are the ones with low p-values.
+#The variables that will contribute significantly to the model are the ones with the highest amount of stars in the table,
+#which represents the lowest p-values. 
+
+#MSE_train = 0.8785431
+#MSE_test = 0.9354477
 
 Exercise3
 
@@ -327,8 +346,8 @@ for (lambda in c(1, 100, 1000)){
   aic = AIC(train=xtrain,Y= ytrain,theta = theta,sigma= sigma, lambda= lambda)
   print(paste("Lambda:",lambda))
   print(paste("TrainMSE:",MSE_train))
-  print(paste("TestMSE:",MSE_train))
-  print(paste("AIC:", aic))
+  print(paste("TestMSE:",MSE_test))
+  print(paste("AIC:", aic)) #Unecessary
 
 
 }
@@ -338,6 +357,8 @@ for (lambda in c(1, 100, 1000)){
 #Which penalty parameter is most appropriate among the selected ones? Compute and compare the degrees of freedom of these models and make appropriate conclusions.
 
 #We have read that to find the best aic value among mutiple aic values is the lowest. In our example it seems like lambda = 1 and lambda = 100 gives similar aic values which is hard to draw conclusions from. Lambda = 1 gives the lowest AIC value.
+#Since the the Lambda = 100 has the lowest test_MSE, this is the best value. 
+#The degrees of freedom reflects the complexity of the model, so the larger lambda, the smaller degrees of freedom we would get. We get more complex models, basically penalizing the complexity. 
 
 
 Assignment 3.
