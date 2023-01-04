@@ -111,17 +111,28 @@ for (i in 1:length(temp)) {
   
   predictions[i] <- sum(weighted_temps)
 }
-plot(times_numbers,predictions,type="o",xlab = "Time of day (hours)",ylab = "Predicted temp",main = "Prediction of temperature using sum")
 
 
 #Used to look at h values
-#plot(rel_h,k_time)
-#plot(dist_hav,k_distance,xlim=c(0,100000))
-#plot(relative_day_dist(date,filtered_temps$date),k_days,xlim=c(0,100))
-
+plot(rel_h,k_time,main = "h value for time")
+plot(dist_hav,k_distance,xlim=c(0,100000),main = "h value for distance")
+plot(relative_day_dist(date,filtered_temps$date),k_days,xlim=c(0,100),main = "h value for days")
 
 
 ```
+The different plots for h-values has been given the following h values: 
+h_distance <- 40000 
+h_date <- 9
+h_time <- 3
+This has given us plots that look reasonably good, since closer points are considered more, while points further away will be less and less considered. 
+
+```{r}
+#sum of kernel plot
+plot(times_numbers,predictions,type="o",xlab = "Time of day (hours)",ylab = "Predicted temp",main = "Prediction of temperature using summation")
+
+```
+
+
 These values look very reasonable. Looking at the curve going from colder at the earlier and later hours, while having higher temperatures at the middle of the day. November of 2013 was a very cold month in general, so having a prediction of +6 C is not unreasonable. 
 
 
@@ -143,7 +154,7 @@ for (i in 1:length(temp)) {
 
   
 }
-plot(times_numbers,predictions2,type="o",xlab = "Time of day (hours)",ylab = "Predicted temp",main = "Prediction of temperature using mult")
+plot(times_numbers,predictions2,type="o",xlab = "Time of day (hours)",ylab = "Predicted temp",main = "Prediction of temperature using multiplication")
 
 
 
