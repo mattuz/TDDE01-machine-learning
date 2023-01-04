@@ -201,11 +201,11 @@ for (i in 1:30){
     bool_train <- (which(cross_train, useNames = T))
     prob_train <- k_train$prob[cross_train, as.character(j)] + 1e-15
     
-    #val_miss_error[i] <- val_miss_error[i] + sum(-(bool_val*log(prob_val)))
-    #train_miss_error[i] <- train_miss_error[i] + sum(-(bool_train*log(prob_train)))
+    val_miss_error[i] <- val_miss_error[i] + sum(-(bool_val*log(prob_val)))
+    train_miss_error[i] <- train_miss_error[i] + sum(-(bool_train*log(prob_train)))
     
-    val_miss_error[i] <- cross.entropy(bool_val, prob_val)
-    train_miss_error[i] <- cross.entropy(bool_train, prob_train)
+    #val_miss_error[i] <- cross.entropy(bool_val, prob_val)
+    #train_miss_error[i] <- cross.entropy(bool_train, prob_train)
     
     
     
