@@ -105,4 +105,127 @@ gaussian_k <- function(x, h) { return (exp(-(x**2)/(2*h*h))) } #h specifies Kern
 ## Neural-Net Regression
 
 
+
+```{r}
+yTestPred = predict(lasso.fit, newx = as.matrix(test[,c(1:8)]), type = "response")
+yTestPred[1]
+yHat = as.matrix(cbind(1,test[1,c(1:8)]))%*% matrix(coef(lasso.fit), ncol=1)
+prediction = exp(yay)
+```
+
+
+## Splines: base R functions only
+
+Example below uses only basic r functions with lm
+Step 1: For order-M Spline We create upto M-1 degree of freedom variables
+
+```{r}
+ M=5
+  X = matrix(data$Day %>% poly(degree = M-1, raw = TRUE), ncol =M-1) ## KEEP `raw=TRUE` when using poly
+```
+
+Step-2: Create Truncated Power Basis functions h(x,xi)h(x,ξ) for each knot!
+
+```{r}
+# knot 𝜁=75
+h.75= ifelse(X[,1]>75, X[,4],0)
+# If 𝜁=80
+h.80= ifelse(X[,1]>80, X[,4],0)
+```
+
+Step-3: Combine Knots and Splines
+```{r}
+# knot 𝜁=75
+X = cbind(X,h.75)
+# If knots: 𝜁=75,𝜁=80
+X = cbind(X, h.75,h.80)
+```
+
+```{r}
+# Use basis function approach to fit an order-5 spline with a single knot 𝜁=75 such that Day is the feature and Rate is the target variable.
+data = read.csv2(paste0(file_path,"mortality_rate.csv"))
+M=5
+X = matrix(data$Day %>% poly(degree = M-1, raw = TRUE), ncol =M-1) ## KEEP `raw=TRUE` when using poly
+h.75= ifelse(X[,1]>75, X[,4],0)
+X = cbind(X,h.75)
+colnames(X) = as.character(seq(1:5))
+df = data.frame(cbind(X,data$Rate))
+colnames(df)
+spline.fit = lm("V6~.", data = df)
+yPred = predict(spline.fit, data = df)
+plot(x = data$Day, y = data$Rate)
+points(x = data$Day,y = yPred, col=2)
+```
+
+## Splines: Using splines library
+
+```{r}
+# Using Library Splines
+library(splines)
+data = read.csv2(paste0(file_path,"mortality_rate.csv"))
+f = as.formula("Rate~bs(Day, df=4, knots = 75)") ## Because order is 5!
+spline.fit = lm(f, data = data)
+yPred = predict(spline.fit, newdata = data)
+plot(x = data$Day, y = data$Rate)
+points(x = data$Day,y = yPred, col=2)
+```
+
+
+## Ridge Regression
+
+In ‘glmnet’ ‘alpha=0’ is for ridge.
+
+Make sure that input data is in matrix format i.e., glmnet(x = as.matrix(scaled_data[,coefs[2:64]]), y = as.matrix(scaled_data[,'Fat']), alpha=0, lambda = grid)
+
+choosing good grid values: grid <- 10 ^ seq (10, -2, length = 100)
+
+use type.measure="class" for getting misclassification error in case of classification task.
+
+We use ‘MSE’ because :
+i. It is the MLE of a normal distribution and we assume error to be normally distributed.
+ii. MSE is a quadratic function i.e., it is easily differentiable and will always have a minimal.
+
+Effective Degrees of freedom: $$df(\lambda) = tr(X(X’X + \lambda I_p)^{-1} X’)$$
+
+```{r}
+# Ridge Regression
+grid <- 10 ^ seq (10, -2, length = 100)
+ridge.fit = glmnet(x = as.matrix(scaled_data[,coefs[2:64]]), y = scaled_data[,'Fat'],alpha=0, lambda = grid)
+# 5 fold cv
+cv.5 = cv.glmnet(x = as.matrix(train[,coefs]), y = as.matrix(train[,'Fat']),alpha=0,lambda = grid,nfolds=10,type.measure = "mse") 
+# Plot CV Results
+plot(log(cv.5$lambda), cv.5$cvm,pch=19,col='red',xlab = 'log(lambda)',ylab = cv.5$name)
+# Optimal lambda
+print(cv.5$lambda.min)
+```
+
+## Poisson Regression
+
+$$
+p(y=Y|\lambda) = \frac{e^{−λ}λ^Y
+}{Y!}
+$$
+For Prediction of 
+$$ 
+\hat{Y} 
+Y
+^
+ , we use \hat{Y} = e^{\mathbf{W^TX}} 
+Y
+^
+ =e^{
+W^ 
+T
+ X}
+  whete \lambda = \mathbf{W^{T}X}
+ 
+$$
+
+```{r}
+yTestPred = predict(lasso.fit, newx = as.matrix(test[,c(1:8)]), type = "response")
+yTestPred[1]
+yHat = as.matrix(cbind(1,test[1,c(1:8)]))%*% matrix(coef(lasso.fit), ncol=1)
+prediction = exp(yay)
+```
+
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
