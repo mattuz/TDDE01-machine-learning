@@ -450,6 +450,11 @@ also see when compared to the plot from the first assignment.
 Exercise 4
 
 ```{r, echo=F}
+w9 = cf[1]
+w2 = cf[2]
+w8 = cf[3]
+x8 = c(seq(0,100,0.1))
+
 for(r in c(.2,.5, .8)) {
   pred=ifelse(prob>r, 'red','green')
   table(pred, prime$V9)
