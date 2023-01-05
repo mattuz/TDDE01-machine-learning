@@ -9,44 +9,55 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r, echo=FALSE, warning=FALSE, results='hide'}
-#packages needed for the lab
-library(kknn)
-library(readxl)
-```
 
-Exercise 1
-
-```{r, warning=FALSE, results='hide', echo=FALSE}
-
+# Read in the optdigits.csv file and store the data in a variable named "data"
+# Set the "header" argument to "F" to specify that the file does not contain a header row
 data = read.csv("optdigits.csv", header = F)
+
+# Get the number of rows in the data and store it in a variable named "n"
 n = dim(data)[1]
+
+# Set the seed of the random number generator to 12345
 set.seed(12345)
 
-
+# Randomly select 50% of the rows in the data and store them in a variable named "train"
 id=sample(1:n, floor(n*0.5))
 train=data[id,]
 
+# Get the remaining rows that were not selected for the training set
 id1=setdiff(1:n, id)
 set.seed(12345)
 
+# Randomly select 25% of the remaining rows and store them in a variable named "valid"
 id2=sample(id1, floor(n*0.25))
 valid=data[id2,]
 
+# Get the remaining rows that were not selected for the training or validation sets
 id3=setdiff(id1,id2)
+
+# Store the remaining rows in a variable named "test"
 test=data[id3,]
 
-
-#Exercise 2
-
-
-k_test <- kknn(as.factor(V65)~., train = train, test = test, k = 30, kernel = "rectangular")
+# Fit a k-NN classifier to the training data, with k=30 and a rectangular kernel
+# Use the classifier to predict the class labels for the training data and store the predictions in "k_train"
 k_train <- kknn(as.factor(V65)~., train = train, test = train, k = 30, kernel = "rectangular")
+
+# Use the classifier to predict the class labels for the validation data and store the predictions in "k_valid"
 k_valid <- kknn(as.factor(V65)~., train = train, test = valid, k = 30, kernel = "rectangular")
 
-test_table = table(k_test$fitted.values, as.factor(test$V65))
+# Use the classifier to predict the class labels for the test data and store the predictions in "k_test"
+k_test <- kknn(as.factor(V65)~., train = train, test = test, k = 30, kernel = "rectangular")
+
+# Create a confusion matrix for the training data by comparing the predicted labels to the true labels
 train_table = table(k_train$fitted.values, train$V65)
+
+# Create a confusion matrix for the validation data by comparing the predicted labels to the true labels
 valid_table = table(k_valid$fitted.values, valid$V65)
 
+# Create a confusion matrix for the test data by comparing the predicted labels to the true labels
+test_table = table(k_test$fitted.values, as.factor(test$V65))
+
+# Define a function to calculate the misclassification rate for a given set of predictions and true labels
 missclass = function(X, X1) {
   n = length(X)
   return (1 - sum(diag(table(X1, X)))/n)
@@ -81,31 +92,52 @@ Exercise 3
 
 ```{r, echo=F}
 
+# Get the probability of each training sample being classified as the digit "8"
 prob_eight <- k_train$prob[, 9]
 
+# Order the probabilities in decreasing order and store the resulting indices in "ordered_high"
+# Keep only the top two indices
 ordered_high <- order(prob_eight, decreasing = T)
 ordered_high <- ordered_high[1:2]
 
+# Order the probabilities in increasing order and store the resulting indices in "ordered_low"
 ordered_low <- order(prob_eight, decreasing = F)
+
+# Get the indices of the "ordered_low" vector that correspond to samples with a non-zero probability of being classified as "8"
 ordered_index <- which(prob_eight > 0)
 
+# Create an empty vector to store the indices of the first three samples in "ordered_low" that are actually the digit "8"
 ordered_low_eights <- c()
+
+# Set an index variable to 1
 index = 1
+
+# Use a loop to append the first three indices from "ordered_low" that correspond to samples that are the digit "8" to "ordered_low_eights"
 while(length(ordered_low_eights) < 3) {
+  # Get the class label of the current sample
   value <-train[ordered_low[index], 65]
+  
+  # If the sample is the digit "8", append its index to "ordered_low_eights"
   if (value == 8) {
     ordered_low_eights <- append(ordered_low_eights, ordered_low[index])
   }
+  
+  # Increment the index variable
   index <- index + 1
 }
 
+# Print the "ordered_low_eights" vector
 print(ordered_low_eights)
 
-  
-  ordered_matrix <- c(ordered_low_eights, ordered_high)
+# Combine the "ordered_low_eights" and "ordered_high" vectors to create the "ordered_matrix" vector
+ordered_matrix <- c(ordered_low_eights, ordered_high)
 
+# Use a loop to create a heatmap for each of the samples corresponding to the indices in the "ordered_matrix" vector
 for (i in ordered_matrix){
+  # Reshape the sample's pixel values into a 8x8 matrix
   my_heatmap <- matrix(as.numeric(train[i,1:64]), nrow=8,ncol=8, byrow = T)
+  
+  # Create a heatmap of the matrix and set the main title to the true class label of the sample
   heatmap(my_heatmap, Colv = NA, Rowv = NA, main =train[i, 65])
 }
 
@@ -121,22 +153,29 @@ for (i in ordered_matrix){
 Exercise 4
 
 ```{r, echo=F}
+# Initialize two empty vectors to store the misclassification rates for the training and validation sets
+# for different values of k
 train_miss_error <- numeric(30)
 val_miss_error <- numeric(30)
 
-
+# Use a loop to fit a k-NN classifier to the training data for each value of k from 1 to 30
+# Use the classifier to predict the class labels for the training and validation sets
+# Calculate the misclassification rate for each set and store the results in the "train_miss_error" and "val_miss_error" vectors
 for (i in 1:30){
   k_valid <- kknn(as.factor(V65)~., train = train, test = valid, k = i, kernel = "rectangular")
   k_train <- kknn(as.factor(V65)~., train = train, test = train, k = i, kernel = "rectangular")
   
   train_miss_error[i] <- missclass(k_train$fitted.values, train$V65)
   val_miss_error[i] <- missclass(k_valid$fitted.values, valid$V65)
-  
 }
 
+# Create a plot of the "train_miss_error" and "val_miss_error" vectors
+# Use k as the x-axis and the misclassification rate as the y-axis
 plot = plot(c(1:30), train_miss_error, ylab = "train_miss_error", xlab = "k", col="pink")
 points(c(1:30), val_miss_error, col="green")
 
+# Fit a k-NN classifier to the training data with k=4
+# Use the classifier to predict the class labels for the training, validation, and test sets
 k_test <- kknn(as.factor(V65)~., train = train, test = test, k = 4, kernel = "rectangular")
 k_train <- kknn(as.factor(V65)~., train = train, test = train, k = 4, kernel = "rectangular")
 k_valid <- kknn(as.factor(V65)~., train = train, test = valid, k = 4, kernel = "rectangular")
@@ -431,11 +470,13 @@ pred=ifelse(prob>0.5, 'red','green')
 plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass Error", toString(miss), sep=" = ")) 
 
 slope = coef(glm.fits)[2]/(-coef(glm.fits)[3])
-intercept = coef(glm.fits)[1]/(-coef(glm.fits)[3])
+intercept = (coef(glm.fits)[1] + log(-r/(r-1)))/(-coef(glm.fits)[3])
 
 #clip(min(x1),max(x1), min(x2), max(x2))
-abline(intercept, slope, lwd = 2, lty = 2)
+abline(intercept , slope, lwd = 2, lty = 2)
 
+he = log(-.2/(.2-1))
+he
 slope
 intercept
 ```
@@ -450,21 +491,21 @@ also see when compared to the plot from the first assignment.
 Exercise 4
 
 ```{r, echo=F}
-w9 = cf[1]
-w2 = cf[2]
-w8 = cf[3]
-x8 = c(seq(0,100,0.1))
 
 for(r in c(.2,.5, .8)) {
   pred=ifelse(prob>r, 'red','green')
   table(pred, prime$V9)
   
+  
   miss <- missclass(pred, prime$V9)
   
-  x2 = (log(-r/(r-1)) - w9 - w8*x8)/w2
-  
   plot(prime$V2, prime$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass_Error = ", toString(miss), "\n r = ", r, sep= "")) 
-  lines(x2,x8,col="blue")
+  
+  slope = coef(glm.fits)[2]/(-coef(glm.fits)[3])
+  intercept = (coef(glm.fits)[1] - log(-r/(r-1)))/(-coef(glm.fits)[3])
+
+  #clip(min(x1),max(x1), min(x2), max(x2))
+  abline(intercept , slope, lwd = 2, lty = 2)
 }
 ```
 
@@ -493,8 +534,6 @@ for(r in c(.2,.5, .8)) {
   table(pred, expanded$V9)
   
   miss <- missclass(pred, prime$V9)
-  
-  x2 = (log(-r/(r-1)) - w9 - w8*x8)/w2
   
   plot(expanded$V2, expanded$V8,col=pred, ylab = "Age", xlab= "Plasma", main = paste("Missclass_Error = ", toString(miss), "\n r = ", r, sep= "")) 
 }
