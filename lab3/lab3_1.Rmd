@@ -258,9 +258,14 @@ err3
 
 The filter we return is filter1. Because the SVM model is trained on trianing data (tr) and validated on validation data (va). Then we should use the optimal err_va to make prediction on the test data. Using ksvm on training data and not any other. In general you do your training on your training set, evalutate its performance on the validation set, and then use the best model to predict on the test dataset. 
 
+New: The filter we should return is the filter trained on the biggest dataset which is filter3. 
+
 # 2. What is the estimate of the generalization error of the filter returned to the user? err0, err1, err2 or err3? Why?
 
 it is err1 = 0.08489388. Filter0 gives low error estimate due to the fact that it is filtered on validation, the same way we choose the optimal err_va. Filter3 gives the lowest error estimate because of the the model is trained on the same data it is predicted on. As for filter1 and filter2, they give similar error estimates. Filter2 error rate is slightly lower due to the fact that it is trained on a larger data set (training and validation), where filter1 is only trained on training data.
+
+New: filter 2 gives an error of 0.082397, this is the nearest estimate we can get of the filter (filter3) returned to the user.
+Filter3 is expected to be a bit better because of more training data. If we knew that the user wanted to be able to get an error estimate, then it could be worth to instead return filter2.
 
 # 3. Implementation of SVM predictions.
 
