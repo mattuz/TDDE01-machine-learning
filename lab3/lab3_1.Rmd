@@ -62,12 +62,13 @@ gaussian_kernel<-function(diff, h_val) {
   return(exp(-u*u))
 }
 
-
+#Relative day distance
 relative_day_dist <- function(d1,d2){
   diff<- as.Date(d1) - as.Date(d2) #Difference between our date and the date we're comparing (in days).
   return (as.numeric(diff))
 }
 
+#relative hour distance, compare our time with another given time. Returns amount of hours. 
 relative_hour_dist <- function(time1, time2) {
   time_obj1 <-strptime(time1,format="%H:%M:%S") #Create time object so that we can extract hour
   time_obj2 <-strptime(time2,format="%H:%M:%S")
@@ -96,18 +97,26 @@ Calculations with sum of kernels.
 
 #Calculations
 predictions = rep(0,11)
-k_distance <- gaussian_kernel(dist_hav,h_distance)
-k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date)
+k_distance <- gaussian_kernel(dist_hav,h_distance) #kernel distance
+k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date) #kernel days
 
 
 
-#Different times in a day.
+#Loop over the different times in a day.
 for (i in 1:length(temp)) {
   rel_h<-relative_hour_dist(times[i],filtered_temps$time)
-  k_time <- gaussian_kernel(relative_hour_dist(times[i],filtered_temps$time),h_time)
+  
+  #Relative time difference for each time specified in the assignment
+  k_time <- gaussian_kernel(relative_hour_dist(times[i],filtered_temps$time),h_time) 
+  
+  #Summation of kernels
   k_sum <- cbind(k_distance + k_days + k_time)
-  k_sum <- (k_sum/sum(k_sum)) # Normalize the values in the k_sum matrix by dividing each element by the sum of the elements in each row
-  weighted_temps <- k_sum * filtered_temps$air_temperature #get weighted temperatures
+  
+  # Normalize the values in the k_sum matrix by dividing each element by the sum of the elements in each row
+  k_sum <- (k_sum/sum(k_sum)) 
+  
+  #get weighted temperatures
+  weighted_temps <- k_sum * filtered_temps$air_temperature 
   
   predictions[i] <- sum(weighted_temps)
 }
@@ -138,25 +147,32 @@ These values look very reasonable. Looking at the curve going from colder at the
 
 ```{r, warning=FALSE, echo=FALSE}
 predictions2 = rep(0,11)
-k_distance <- gaussian_kernel(dist_hav,h_distance)
-k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date)
+k_distance <- gaussian_kernel(dist_hav,h_distance) #kernel distance
+k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date) #kernel days
 
 
 
 for (i in 1:length(temp)) {
   rel_h<-relative_hour_dist(times[i],filtered_temps$time)
+  
+  #Relative time difference for each time specified in the assignment
   k_time <- gaussian_kernel(relative_hour_dist(times[i],filtered_temps$time),h_time)
+  
+  #Multiply kernels
   k_sum <- cbind(k_distance * k_days * k_time)
-  k_sum <- (k_sum/sum(k_sum)) # Normalize the values in the k_sum matrix by dividing each element by the sum of the elements in each row
-  weighted_temps <- k_sum * filtered_temps$air_temperature #get weighted temperatures
+  
+  # Normalize the values in the k_sum matrix by dividing each element by the sum of the elements in each row
+  k_sum <- (k_sum/sum(k_sum)) 
+  
+  #get weighted temperatures
+  weighted_temps <- k_sum * filtered_temps$air_temperature 
   
   predictions2[i] <- sum(weighted_temps)
 
   
 }
+
 plot(times_numbers,predictions2,type="o",xlab = "Time of day (hours)",ylab = "Predicted temp",main = "Prediction of temperature using multiplication")
-
-
 
 ```
 This graph looks a bit more unclear. It's difficult to interpret if there's something wrong with how the data has been divided when multiplying, since the curve is not distributed like a bell curve. 
@@ -318,16 +334,14 @@ lines(prediction)
 ```
 The red dotted points is the predicted values that generated from the linear combination for filter3. The lines is the predictions from the predict function.
 
-Task 3
-
-## Including Plots
-
-You can also embed plots, for example :
+## Task 3
 
 1:
 ```{r, echo=FALSE, warning=FALSE}
 library(neuralnet)
 set.seed(1234567890)
+
+# Generate 500 random values between 0 and 10
 Var <- runif(500, 0, 10)
 mydata <- data.frame(Var, Sin=sin(Var))
 tr <- mydata[1:25,] # Training
@@ -335,8 +349,11 @@ te <- mydata[26:500,] # Test
 winit = runif(31, -1,1) #weights: one for each of the 10 hidden nodes, plus one for the bias term for each of the 10 hidden nodes,
                         #plus one for the output node, plus one for the bias term for the output node
 
+# Fit the neural network using the training data
+# The neural network has 10 hidden nodes and uses the initial weights stored in winit
 nn <- neuralnet(Sin ~ Var, data = tr,
                 hidden = 10, startweights = winit)
+
 # Plot of the training data (black), test data (blue), and predictions (red)
 plot(tr, cex=2)
 points(te, col = "blue", cex=1)
@@ -375,15 +392,15 @@ h1 <- function(x) x
 h2 <- function(x) ifelse(x>0,x,0)
 h3 <- function(x) log(1 + exp(x))
 
-# Train neural network with custom activation functions
+# Train neural network with custom activation functions (h1)
 nn1 <- neuralnet(Sin ~ Var, data = tr,
                 hidden = 10, act.fct = h1, startweights = winit)
 
-# Train neural network with custom activation functions
+# Train neural network with custom activation functions (h2)
 nn2 <- neuralnet(Sin ~ Var, data = tr,
                 hidden = 10, act.fct = h2, startweights = winit)
 
-# Train neural network with custom activation functions
+# Train neural network with custom activation functions (h3)
 nn3 <- neuralnet(Sin ~ Var, data = tr,
                 hidden = 10, act.fct = h3, startweights = winit)
 
@@ -414,19 +431,24 @@ predict some values.
 library(neuralnet)
 set.seed(1234567890)
 Var <- runif(500, 0, 50)
+
+# Create a data frame with two columns: Var and Sin
+# Sin contains the sine of the values in Var
 mydata <- data.frame(Var, Sin=sin(Var))
 
 
 # Plot of the training data (black), test data (blue), and predictions (red)
 
+# Use the nn neural network to make predictions on mydata
 prediction = predict(nn,mydata)
 
 plot(mydata, col = "blue", cex=1, ylim=c(-15, 2), xlim=c(0, 55))
 points(mydata[,1],prediction, col="red", cex=1, )
 
-
+# Find the index of the minimum value in the prediction vector
 smallestIndex = which.min(prediction)
 
+# Retrieve the minimum value of the prediction vector using the index
 smallestvalue = prediction[smallestIndex]
 
 weights = nn$weights
@@ -468,11 +490,12 @@ Var <- runif(500, 0, 10)
 mydata <- data.frame(Var, Sin=sin(Var))
 otherWayData <- data.frame(Sin=sin(Var), Var)
 
+# Generate 31 random numbers between 0 and 10
 winit = runif(31, 0,10)
 
-# Use all these points as training points
 
-# Set the target variable to be Var instead of Sin
+# Use all the points in mydata as training points for a neural network
+# The target variable is set to be Var instead of Sin
 nn <- neuralnet(Var ~ Sin, data = mydata, hidden = 10, threshold = 0.1, startweights = winit )
 
 # Plot the predictions of the neural network
