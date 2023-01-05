@@ -1,0 +1,108 @@
+---
+title: "Sheet"
+author: "me"
+date: "2023-01-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+### Data-Manipulation
+
+## 1.1 Load Excel Data
+
+```{r}
+library("readxl")
+tecator = read_excel("tecator.xls")
+write.csv(tecator, file="tecator.csv", row.names = FALSE) #Save to tecator.csv without rownames
+```
+
+## 1.2 Convert to Dataframe
+```{r}
+tecator1 = as.data.frame(tecator)
+
+```
+
+## 1.2 Change names and stuff
+```{r}
+rownames(tecator1) = tecator1$Sample+10 #Change row names in tecator1 to the values of Sample column plus 10
+colnames(tecator1)[1]="ID" #Change column name in tecator1 from Sample to ID
+print(tecator1[tecator1$Channel1>3 & tecator1$Channel2>3, 5:8]) #Extract rows in tecator1 such that Channel1 > 3 and Channel2 > 3 and columns between number 5 and number 8
+tecator1$ID=c() #Remove column ID
+
+#Update tecator1 by dividing its all Channel columns with their respective means per column
+library(stringr)
+index=str_which(colnames(tecator1), "Channel")
+tecatorChannel=tecator1[,index]
+means=colMeans(tecatorChannel)
+tecator1[,index]=tecator1[,index]/matrix(means, nrow=nrow(tecatorChannel), ncol=ncol(tecatorChannel), byrow=TRUE)
+```
+
+## 1.4 Create Dataframe
+```{r}
+birth = read.csv("birthstatistics.csv") #Data with headers
+blog = read.csv("blogData_test.csv", header=FALSE) #Without headers, column names are missing.
+```
+
+## 1.5 Train/Test Split Data
+```{r}
+n = dim(data)[1]
+set.seed(12345)
+id = sample(1:n, floor(n*0.5))
+train = data[id,]
+test = data[-id,]
+```
+
+## 1.6 Train/Test/Validation Split
+```{r}
+n=dim(data)[1]
+set.seed(12345)
+id=sample(1:n, floor(n*0.4))
+train=data[id,]
+
+id1=setdiff(1:n, id)
+set.seed(12345)
+id2=sample(id1, floor(n*0.3))
+valid=data[id2,]
+
+id3=setdiff(id1,id2)
+test=data[id3,] 
+```
+
+## 1.7 Writing Custom formula
+```{r}
+covariates = names(spam)[0:48] # Collect Covariates 1st
+cov=paste(covariates, collapse='+') # Collapse the covariates
+form = as.formula(paste0('target~',cov)) # Create the formula with the target
+```
+
+## 1.8 Gaussian Kernel
+```{r}
+gaussian_k <- function(x, h) { return (exp(-(x**2)/(2*h*h))) } #h specifies Kernel Width
+```
+
+## 1.9 Package Vignette
+```{r}
+utils::browseVignettes("gbm") # Package Name
+```
+
+## 1.10 Metrics
+```{r}
+gaussian_k <- function(x, h) { return (exp(-(x**2)/(2*h*h))) } #h specifies Kernel Width
+```
+
+
+### Supervised Learning
+
+## Neural-Net Regression
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
