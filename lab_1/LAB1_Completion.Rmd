@@ -7,7 +7,16 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+The data file optdigits.csv contains information about normalized bitmaps of
+handwritten digits from a preprinted form from a total of 43 people. The data were
+first derived as 32x32 bitmaps which were then divided into nonoverlapping blocks
+of 4x4 and the number of on pixels are counted in each block. This has generated the
+resulting image of size 8x8 where each element is an integer in the range 0..16.
+Accordingly, each row in the data file is a sequence corresponding to 8x8 matrix,
+and the last element shows the actual digit from 0 to 9
 
+1. Import the data into R and divide it into training, validation and test sets
+(50%/25%/25%)
 ```{r, echo=FALSE, warning=FALSE, results='hide'}
 
 # Read in the optdigits.csv file and store the data in a variable named "data"
@@ -83,14 +92,23 @@ missclass_train
 
 ```
 
-#Comment on the quality of predictions for different digits and on the overall prediction quality.
 
-#Some numbers have worse predictions than others, for example number 4 was predicted to be a 7 a couple of times. 
-#This is most likely due to slopy writing that makes different numbers look more similar to others. 
-#The overall prediction quality is good.
-Exercise 3
+Comment on the quality of predictions for different digits and on the overall prediction quality.
 
-```{r, echo=F}
+Some numbers have worse predictions than others, for example number 4 was predicted to be a 7 a couple of times. 
+This is most likely due to slopy writing that makes different numbers look more similar to others. 
+The overall prediction quality is good.
+
+#Exercise 3
+
+3. Find any 2 cases of digit “8” in the training data which were easiest to classify
+and 3 cases that were hardest to classify (i.e. having highest and lowest
+probabilities of the correct class). Reshape features for each of these cases as
+matrix 8x8 and visualize the corresponding digits (by using e.g. heatmap()
+function with parameters Colv=NA and Rowv=NA) and comment on whether
+these cases seem to be hard or easy to recognize visually
+
+```{r, echo=F, fig.show='hide'}
 
 # Get the probability of each training sample being classified as the digit "8"
 prob_eight <- k_train$prob[, 9]
@@ -143,16 +161,20 @@ for (i in ordered_matrix){
 
 ```
 
-
-#comment on whether these cases seem to be hard or easy to recognize visually. 
-
-#The eights that were easy to classify are also very easy to see as eights. 
-#The eights that were most difficult to spot are very difficult to see without knowing that they're eights beforehand. 
+The eights that were easy to classify are also very easy to see as eights. 
+The eights that were most difficult to spot are very difficult to see without knowing that they're eights beforehand. 
 
 
-Exercise 4
+#Exercise 4
 
-```{r, echo=F}
+Fit a K-nearest neighbor classifiers to the training data for different values of 𝐾𝐾 =
+1,2, … , 30 and plot the dependence of the training and validation misclassification
+errors on the value of K (in the same plot). How does the model complexity
+change when K increases and how does it affect the training and validation 
+errors? Report the optimal 𝐾𝐾 according to this plot. Finally, estimate the test error
+for the model having the optimal K, compare it with the training and validation
+errors and make necessary conclusions about the model quality.
+```{r, echo=F, fig.show='hide'}
 # Initialize two empty vectors to store the misclassification rates for the training and validation sets
 # for different values of k
 train_miss_error <- numeric(30)
@@ -186,32 +208,30 @@ missclass_valid = missclass(k_valid$fitted.values, valid$V65)
 ```
 
 
+How does the model complexity change when K increases and how does it affect the training and validation errors?
 
-Missclass Values
-```{r, echo=T}
-missclass_test
-missclass_train
-missclass_valid
+The model complexity remains the same as k increases, since it's not learning more parameters or features as k increases.
+One can argue that the overall complexity is increased since there are more data points added, but this does not mean that the complexity of the model
+is higher. 
+The best K values are the ones with the lowest missclass error, in this case k=3 and k=4 are the best values. 
 
-
-```
-
-#How does the model complexity change when K increases and how does it affect the training and validation errors?
-
-#The model complexity remains the same as k increases, since it's not learning more parameters or features as k increases.
-#One can argue that the overall complexity is increased since there are more data points added, but this does not mean that the complexity of the model
-#is higher. 
-#The best K values are the ones with the lowest missclass error, in this case k=3 and k=4 are the best values. 
-
-#We can see that train gives the lowest missclass error because it is the date we made the model from.
-#Both test and validation is slightly higher which is to be expected.
-#With the right k value computed with the validation data we get a test error which is just above 2.5% 
-#Which results in a pretty high quality model.
+We can see that train gives the lowest missclass error because it is the date we made the model from.
+Both test and validation is slightly higher which is to be expected.
+With the right k value computed with the validation data we get a test error which is just above 2.5% 
+Which results in a pretty high quality model.
 
 
-Exercise 5
+#Exercise 5
 
-```{r, echo=F}
+Fit K-nearest neighbor classifiers to the training data for different values of 𝐾𝐾 =
+1,2, … , 30, compute the error for the validation data as cross-entropy ( when
+computing log of probabilities add a small constant within log, e.g. 1e-15, to
+avoid numerical problems) and plot the dependence of the validation error on the
+value of 𝐾𝐾. What is the optimal 𝐾𝐾 value here? Assuming that response has
+multinomial distribution, why might the cross-entropy be a more suitable choice
+of the error function than the misclassification error for this problem?
+
+```{r, echo=F, fig.show='hide'}
 cross.entropy <- function(p, phat){
   x <- 0
   for (i in 1:length(p)){
@@ -259,15 +279,32 @@ which.min(entropy_error)
 ```
 
 
-#What is the optimal 𝐾𝐾 value here? Assuming that response has multinomial distribution, why might the cross-entropy be a more suitable choice of the error function than the missclassification error for this problem?
+What is the optimal 𝐾𝐾 value here? Assuming that response has multinomial distribution, why might the cross-entropy be a more suitable choice of the error function than the missclassification error for this problem?
 
-#This model might be more suitable because of lower complexity levels than missclass error.
-#The optimal K value here is K = 5. 
+This model might be more suitable because of lower complexity levels than missclass error.
+The optimal K value here is K = 5. 
 
-Assigment 2
+#Assigment 2
 
+The data file parkinson.csv is composed of a range of biomedical voice
+measurements from 42 people with early-stage Parkinson's disease recruited to a
+six-month trial of a telemonitoring device for remote symptom progression
+monitoring. The purpose is to predict Parkinson's disease symptom score (motor
+UPDRS) from the following voice characteristics:
+• Jitter(%),Jitter(Abs),Jitter:RAP,Jitter:PPQ5,Jitter:DDP - Several measures of
+variation in fundamental frequency
+• Shimmer,Shimmer(dB),Shimmer:APQ3,Shimmer:APQ5,Shimmer:APQ11,Shi
+mmer:DDA - Several measures of variation in amplitude
+• NHR,HNR - Two measures of ratio of noise to tonal components in the voice
+• RPDE - A nonlinear dynamical complexity measure
+• DFA - Signal fractal scaling exponent
+• PPE - A nonlinear measure of fundamental frequency variation
 
-```{r, echo=F}
+Divide it into training and test data (60/40) and scale it appropriately. In the
+coming steps, assume that motor_UPDRS is normally distributed and is a
+function of the voice characteristics, and since the data are scaled, no
+intercept is needed in the modelling.
+```{r, echo=F, fig.show='hide'}
 library(caret)
 parkin = read.csv("parkinsons.csv", header = T)
 parkin_corr <- data.frame(parkin[c(5,7:22)]) #Remove unused voice characteristics
@@ -285,9 +322,15 @@ data_scaler<-preProcess(train_pre)
 train<-predict(data_scaler,train_pre)
 test<-predict(data_scaler,test_pre)
 ```
-Excercise 2
 
-```{r, echo=T}
+
+#Excercise 2
+
+Compute a linear regression model from the training data, estimate training
+and test MSE and comment on which variables contribute significantly to the
+model.
+
+```{r, echo=T, fig.show='hide'}
 fit = lm(motor_UPDRS ~ .-1, data = train)
 sum = summary(fit)
 MSE_train<-mean(sum$residuals^2)
@@ -300,17 +343,33 @@ print(sum)
 
 ```
 
-#The variables p-values that are higher than 0.05 does not contribute at all (insignificant P-values).
-#The values that contribute significantly are the ones with low p-values.
-#The variables that will contribute significantly to the model are the ones with the highest amount of stars in the table,
-#which represents the lowest p-values. 
+The variables p-values that are higher than 0.05 does not contribute at all (insignificant P-values).
+The values that contribute significantly are the ones with low p-values.
+The variables that will contribute significantly to the model are the ones with the highest amount of stars in the table,
+which represents the lowest p-values. 
 
-#MSE_train = 0.8785431
-#MSE_test = 0.9354477
+MSE_train = 0.8785431
+MSE_test = 0.9354477
 
-Exercise3
+#Exercise3
 
-```{r, echo=F}
+Implement 4 following functions by using basic R commands only (no
+external packages):
+a. Loglikelehood function that for a given parameter vector 𝜽𝜽 and
+dispersion 𝜎𝜎 computes the log-likelihood function log 𝑃𝑃(𝑇𝑇|𝜽𝜽, 𝜎𝜎) for
+the stated model and the training data
+
+b. Ridge function that for given vector 𝜽𝜽, scalar 𝜎𝜎 and scalar 𝜆𝜆 uses
+function from 3a and adds up a Ridge penalty 𝜆𝜆‖𝜽𝜽‖2 to the minus loglikelihood.
+
+c. RidgeOpt function that depends on scalar 𝜆𝜆 , uses function from 3b
+and function optim() with method=”BFGS” to find the optimal 𝜽𝜽 and 𝜎𝜎
+for the given 𝜆𝜆.
+
+d. Df function that for a given scalar 𝜆𝜆 computes the degrees of freedom
+of the Ridge model based on the training data.
+
+```{r, echo=F, fig.show='hide'}
 log_likelihood <- function(train, Y, theta, sigma){
 
   n <- dim(train)[1] 
@@ -357,7 +416,7 @@ dF <- function(X, lambda){
 } 
 ```
 
-```{r, echo=F}
+```{r, echo=F, fig.show='hide'}
   AIC = function(train,Y,theta, sigma, lambda){
     log_like = log_likelihood(train = train, Y=Y, theta = theta, sigma = sigma)
     N = dim(train)[1] # No of data points
@@ -367,9 +426,16 @@ dF <- function(X, lambda){
   }
 ```
 
-Exercise 4
+#Exercise 4
 
-```{r, echo=F}
+By using function RidgeOpt, compute optimal 𝜽𝜽 parameters for 𝜆𝜆 = 1, 𝜆𝜆 =
+100 and 𝜆𝜆 = 1000. Use the estimated parameters to predict the
+motor_UPDRS values for training and test data and report the training and
+test MSE values. Which penalty parameter is most appropriate among the
+selected ones? Compute and compare the degrees of freedom of these models
+and make appropriate conclusions.
+
+```{r, echo=F, fig.show='hide'}
 xtrain<-as.matrix(train[2:17])
 ytrain<-as.matrix(train[1])
 xtest=as.matrix(test[2:17])
@@ -393,16 +459,25 @@ for (lambda in c(1, 100, 1000)){
 
 ```
 
-#Which penalty parameter is most appropriate among the selected ones? Compute and compare the degrees of freedom of these models and make appropriate conclusions.
+Which penalty parameter is most appropriate among the selected ones? Compute and compare the degrees of freedom of these models and make appropriate conclusions.
 
-#We have read that to find the best aic value among mutiple aic values is the lowest. In our example it seems like lambda = 1 and lambda = 100 gives similar aic values which is hard to draw conclusions from. Lambda = 1 gives the lowest AIC value.
-#Since the the Lambda = 100 has the lowest test_MSE, this is the best value. 
-#The degrees of freedom reflects the complexity of the model, so the larger lambda, the smaller degrees of freedom we would get. We get more complex models, basically penalizing the complexity. 
+We have read that to find the best aic value among mutiple aic values is the lowest. In our example it seems like lambda = 1 and lambda = 100 gives similar aic values which is hard to draw conclusions from. Lambda = 1 gives the lowest AIC value.
+Since the the Lambda = 100 has the lowest test_MSE, this is the best value. 
+The degrees of freedom reflects the complexity of the model, so the larger lambda, the smaller degrees of freedom we would get. We get more complex models, basically penalizing the complexity. 
 
 
-Assignment 3.
+##Assignment 3.
 
-```{r, echo=F}
+The data file pima-indians-diabetes.csv contains information about the onset of
+diabetes within 5 years in Pima Indians given medical details. The variables are (in
+the same order as in the dataset):
+
+Make a scatterplot showing a Plasma glucose concentration on Age where
+observations are colored by Diabetes levels. Do you think that Diabetes is easy
+to classify by a standard logistic regression model that uses these two variables as
+features? Motivate your answer.
+
+```{r, echo=F, fig.show='hide'}
 prime = read.csv("pima-indians-diabetes.csv", header = F)
 
 set.seed(12345)
@@ -410,7 +485,7 @@ set.seed(12345)
 ```
 
 
-```{r, echo=F}
+```{r, echo=F, fig.show='hide'}
 coloor <- function(x){
   if (x==1){
     c = "red"
@@ -428,9 +503,18 @@ seems to be different, no obvious correlation between the variables.
 Making a linear regression would not provide a meaningful line. 
 
 
-Exercise 2
+#Exercise 2
 
-```{r, echo=F}
+Train a logistic regression model with 𝑦𝑦 =Diabetes as target 𝑥𝑥1 =Plasma glucose
+concentration and 𝑥𝑥2 =Age as features and make a prediction for all observations
+by using 𝑟𝑟 = 0.5 as the classification threshold. Report the probabilistic equation
+of the estimated model (i.e., how the target depends on the features and the
+estimated model parameters probabilistically). Compute also the training
+misclassification error and make a scatter plot of the same kind as in step 1 but
+showing the predicted values of Diabetes as a color instead. Comment on the
+quality of the classification by using these results
+
+```{r, echo=F, fig.show='hide'}
 glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
 prob=predict(glm.fits, type="response")
 pred=ifelse(prob>0.5, 'red','green')
@@ -457,9 +541,14 @@ $$
 It seems to be an acceptable classification with about 1/4 error but not perfect 
 There seems to be a division when you reach above 150 in plasma-glucose levels. But this threshold seems to lower as you age. An older person is more likely to have diabetes even with lower plasma-glucose levels. 
 
-Exercise 3
+#Exercise 3
 
-```{r, echo=F}
+Use the model estimated in step 2 to a) report the equation of the decision
+boundary between the two classes b) add a curve showing this boundary to the
+scatter plot in step 2. Comment whether the decision boundary seems to catch the
+data distribution well.
+
+```{r, echo=F, fig.show='hide'}
 
 r=.5
 glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
@@ -488,9 +577,13 @@ and most diabetes cases are captured to the right. But with a missclass error of
 also see when compared to the plot from the first assignment.
 
 
-Exercise 4
+#Exercise 4
 
-```{r, echo=F}
+Make same kind of plots as in step 2 but use thresholds 𝑟𝑟 = 0.2 and 𝑟𝑟 = 0.8. By
+using these plots, comment on what happens with the prediction when 𝑟𝑟 value
+changes.
+
+```{r, echo=F, fig.show='hide'}
 
 for(r in c(.2,.5, .8)) {
   pred=ifelse(prob>r, 'red','green')
@@ -513,10 +606,24 @@ With r=.2 and r=.8, the missclassification error increased. r=.2 was clearly wor
 
 
 
-Exercise 5
+#Exercise 5
 
+Perform a basis function expansion trick by computing new features 𝑧𝑧1 = 𝑥𝑥1
+4,
+𝑧𝑧2 = 𝑥𝑥1
+3𝑥𝑥2, 𝑧𝑧3 = 𝑥𝑥1
+2𝑥𝑥2
+2, 𝑧𝑧4 = 𝑥𝑥1𝑥𝑥2
+3, 𝑧𝑧5 = 𝑥𝑥2
+4 , adding them to the data set and
+then computing a logistic regression model with 𝑦𝑦 as target and
+𝑥𝑥1, 𝑥𝑥2, 𝑧𝑧1, … , 𝑧𝑧5 as features. Create a scatterplot of the same kind as in step 2
+for this model and compute the training misclassification rate. What can you
+say about the quality of this model compared to the previous logistic
+regression model? How have the basis expansion trick affected the shape of
+the decision boundary and the prediction accuracy?
 
-```{r, echo=F}
+```{r, echo=F, fig.show='hide'}
 expanded <- prime
 
 expanded$z1 <- expanded$V2 ** 4
