@@ -7,10 +7,14 @@ date: "2022-12-08"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-Task 1
+##Task 1
 
-Setup
-```{r, warning=FALSE, echo=FALSE}
+Implement a kernel method to predict the hourly temperatures for a date and place in Sweden.
+The forecast should consist of the predicted temperatures from 4 am to 24 pm in an interval of 2
+hours. 
+
+#Setup
+```{r, warning=FALSE}
 set.seed(1234567890)
 library(geosphere)
 stations <- read.csv("stations.csv")
@@ -41,8 +45,12 @@ temp <- vector(length=length(times)) # length for times: used in forloop.
 ```
 
  
-
-```{r, warning=FALSE, echo=FALSE}
+● The first to account for the physical distance from a station to the point of interest. For
+this purpose, use the function distHaversine from the R package geosphere.
+● The second to account for the distance between the day a temperature measurement
+was made and the day of interest.
+● The third to account for the distance between the hour of the day a temperature measurement was made and the hour of interest.
+```{r, warning=FALSE}
 
 #Calculations for relative distances in location, date (day) and time (hours).
 # Students’ code here
@@ -90,10 +98,16 @@ relative_hour_dist <- function(time1, time2) {
 ```
 
 
+Use a kernel that is the sum of three Gaussian kernels:
 
-Calculations with sum of kernels. 
+Choose an appropriate smoothing coefficient or width for each of the three kernels above.
+No cross-validation should be used. Instead, choose manually a width that gives large kernel
+values to closer points and small values to distant points. Show this with a plot of the kernel
+value as a function of distance.
 
-```{r, warning=FALSE, echo=FALSE}
+#Calculations with sum of kernels. 
+
+```{r, warning=FALSE, fig.show='hide'}
 
 #Calculations
 predictions = rep(0,11)
@@ -135,7 +149,7 @@ h_date <- 9
 h_time <- 3
 This has given us plots that look reasonably good, since closer points are considered more, while points further away will be less and less considered. 
 
-```{r}
+```{r,fig.show='hide'}
 #sum of kernel plot
 plot(times_numbers,predictions,type="o",xlab = "Time of day (hours)",ylab = "Predicted temp",main = "Prediction of temperature using summation")
 
@@ -145,7 +159,10 @@ plot(times_numbers,predictions,type="o",xlab = "Time of day (hours)",ylab = "Pre
 These values look very reasonable. Looking at the curve going from colder at the earlier and later hours, while having higher temperatures at the middle of the day. November of 2013 was a very cold month in general, so having a prediction of +6 C is not unreasonable. 
 
 
-```{r, warning=FALSE, echo=FALSE}
+Finally, repeat the exercise above by combining the three kernels into one by multiplying
+them, instead of summing them up. Compare the results obtained in both cases and elaborate
+on why they may differ.
+```{r, warning=FALSE, fig.show='hide'}
 predictions2 = rep(0,11)
 k_distance <- gaussian_kernel(dist_hav,h_distance) #kernel distance
 k_days <- gaussian_kernel(relative_day_dist(date,filtered_temps$date),h_date) #kernel days
@@ -181,10 +198,10 @@ The reason for this graph being less "well distributed" is because the multiplie
 
 The summed kernel graph gives equal weights to all values which will give our predictions more "real" data to use, since values a bit further away from our initial ones will still be considered. In this case these values are very relevant, since weather predictions (more specifically, temperature predictions) require a lot of data, which should be distributed over time (and not only looking at the exact same day/time/location as what we're trying to predict). 
 
-Task 2
+##Task 2
 
-Error estimates:
-```{r, warning=FALSE, echo=FALSE}
+#Error estimates:
+```{r, warning=FALSE, fig.show='hide'}
 
 # Load the kernlab library
 library(kernlab)
@@ -283,10 +300,20 @@ it is err1 = 0.08489388. Filter0 gives low error estimate due to the fact that i
 New: filter 2 gives an error of 0.082397, this is the nearest estimate we can get of the filter (filter3) returned to the user.
 Filter3 is expected to be a bit better because of more training data. If we knew that the user wanted to be able to get an error estimate, then it could be worth to instead return filter2.
 
-# 3. Implementation of SVM predictions.
+# 3. Implementation of SVM predictions. 
+Once a SVM has been fitted to the training data, a new point is essentially classified
+according to the sign of a linear combination of the kernel function values between the
+support vectors and the new point. You are asked to implement this linear combination
+for filter3. You should make use of the functions alphaindex, coef and b that
+return the indexes of the support vectors, the linear coefficients for the support vectors,
+and the negative intercept of the linear combination. See the help file of the kernlab
+package for more information. You can check if your results are correct by comparing
+them with the output of the function predict where you set type = "decision".
+Do so for the first 10 points in the spam dataset. Feel free to use the template provided
+in the Lab3Block1 2021 SVMs St.R file.
 
 
-```{r, echo=FALSE}
+```{r, warning=FALSE, fig.show='hide'}
 # Get the indices of the support vectors in the SVM classifier
 sv <- alphaindex(filter3)[[1]]
 
@@ -336,8 +363,9 @@ The red dotted points is the predicted values that generated from the linear com
 
 ## Task 3
 
+
 1:
-```{r, echo=FALSE, warning=FALSE}
+```{r, warning=FALSE, fig.show='hide'}
 library(neuralnet)
 set.seed(1234567890)
 
@@ -374,7 +402,7 @@ this is reasonoble and it then finds its way back.
 
 
 2:
-```{r, echo=FALSE}
+```{r, warning=FALSE, fig.show='hide'}
 library(neuralnet)
 
 # Set seed for reproducibility
@@ -427,7 +455,7 @@ predict some values.
 
 3:
 
-```{r, echo=FALSE}
+```{r, warning=FALSE, fig.show='hide'}
 library(neuralnet)
 set.seed(1234567890)
 Var <- runif(500, 0, 50)
@@ -482,7 +510,7 @@ Not sure why it converges to exactly -10.74.
 
 5:
 
-```{r, echo=FALSE}
+```{r, warning=FALSE, fig.show='hide'}
 # Sample 500 points uniformly at random in the interval [0,10]
 Var <- runif(500, 0, 10)
 
