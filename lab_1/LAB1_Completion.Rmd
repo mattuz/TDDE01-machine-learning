@@ -17,7 +17,8 @@ and the last element shows the actual digit from 0 to 9
 
 1. Import the data into R and divide it into training, validation and test sets
 (50%/25%/25%)
-```{r, echo=FALSE, warning=FALSE, results='hide'}
+```{r, warning=FALSE, results='hide'}
+library("kknn")
 
 # Read in the optdigits.csv file and store the data in a variable named "data"
 # Set the "header" argument to "F" to specify that the file does not contain a header row
@@ -108,7 +109,7 @@ matrix 8x8 and visualize the corresponding digits (by using e.g. heatmap()
 function with parameters Colv=NA and Rowv=NA) and comment on whether
 these cases seem to be hard or easy to recognize visually
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 
 # Get the probability of each training sample being classified as the digit "8"
 prob_eight <- k_train$prob[, 9]
@@ -174,7 +175,7 @@ change when K increases and how does it affect the training and validation
 errors? Report the optimal 𝐾𝐾 according to this plot. Finally, estimate the test error
 for the model having the optimal K, compare it with the training and validation
 errors and make necessary conclusions about the model quality.
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 # Initialize two empty vectors to store the misclassification rates for the training and validation sets
 # for different values of k
 train_miss_error <- numeric(30)
@@ -231,7 +232,7 @@ value of 𝐾𝐾. What is the optimal 𝐾𝐾 value here? Assuming that respon
 multinomial distribution, why might the cross-entropy be a more suitable choice
 of the error function than the misclassification error for this problem?
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 cross.entropy <- function(p, phat){
   x <- 0
   for (i in 1:length(p)){
@@ -304,7 +305,7 @@ Divide it into training and test data (60/40) and scale it appropriately. In the
 coming steps, assume that motor_UPDRS is normally distributed and is a
 function of the voice characteristics, and since the data are scaled, no
 intercept is needed in the modelling.
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 library(caret)
 parkin = read.csv("parkinsons.csv", header = T)
 parkin_corr <- data.frame(parkin[c(5,7:22)]) #Remove unused voice characteristics
@@ -369,7 +370,7 @@ for the given 𝜆𝜆.
 d. Df function that for a given scalar 𝜆𝜆 computes the degrees of freedom
 of the Ridge model based on the training data.
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 log_likelihood <- function(train, Y, theta, sigma){
 
   n <- dim(train)[1] 
@@ -416,7 +417,7 @@ dF <- function(X, lambda){
 } 
 ```
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
   AIC = function(train,Y,theta, sigma, lambda){
     log_like = log_likelihood(train = train, Y=Y, theta = theta, sigma = sigma)
     N = dim(train)[1] # No of data points
@@ -435,7 +436,7 @@ test MSE values. Which penalty parameter is most appropriate among the
 selected ones? Compute and compare the degrees of freedom of these models
 and make appropriate conclusions.
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 xtrain<-as.matrix(train[2:17])
 ytrain<-as.matrix(train[1])
 xtest=as.matrix(test[2:17])
@@ -477,7 +478,7 @@ observations are colored by Diabetes levels. Do you think that Diabetes is easy
 to classify by a standard logistic regression model that uses these two variables as
 features? Motivate your answer.
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 prime = read.csv("pima-indians-diabetes.csv", header = F)
 
 set.seed(12345)
@@ -485,7 +486,7 @@ set.seed(12345)
 ```
 
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 coloor <- function(x){
   if (x==1){
     c = "red"
@@ -514,7 +515,7 @@ misclassification error and make a scatter plot of the same kind as in step 1 bu
 showing the predicted values of Diabetes as a color instead. Comment on the
 quality of the classification by using these results
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
 prob=predict(glm.fits, type="response")
 pred=ifelse(prob>0.5, 'red','green')
@@ -548,7 +549,7 @@ boundary between the two classes b) add a curve showing this boundary to the
 scatter plot in step 2. Comment whether the decision boundary seems to catch the
 data distribution well.
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 
 r=.5
 glm.fits = glm(V9~ V2 + V8, prime, family = "binomial" )
@@ -583,7 +584,7 @@ Make same kind of plots as in step 2 but use thresholds 𝑟𝑟 = 0.2 and 𝑟�
 using these plots, comment on what happens with the prediction when 𝑟𝑟 value
 changes.
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 
 for(r in c(.2,.5, .8)) {
   pred=ifelse(prob>r, 'red','green')
@@ -623,7 +624,7 @@ say about the quality of this model compared to the previous logistic
 regression model? How have the basis expansion trick affected the shape of
 the decision boundary and the prediction accuracy?
 
-```{r, echo=F, fig.show='hide'}
+```{r, echo=T, fig.show='hide'}
 expanded <- prime
 
 expanded$z1 <- expanded$V2 ** 4
